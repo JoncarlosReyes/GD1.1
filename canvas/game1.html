@@ -7,7 +7,7 @@ canvas {
     border:1px solid #d3d3d3;
     background-color: #f1f1f1;
 }
-    #loadingScreen {
+#loadingScreen {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -24,9 +24,7 @@ canvas {
 </head>
 <body>
 <div id="loadingScreen">Start Game</div>
-</style>
-</head>
-<body onload="startGame()">
+
 <script>
 
 var myGamePiece;
@@ -145,6 +143,11 @@ function everyinterval(n) {
 function accelerate(n) {
     myGamePiece.gravity = n;
 }
+
+document.getElementById("loadingScreen").addEventListener("click", function() {
+    document.getElementById("loadingScreen").style.display = "none";
+    startGame();
+});
 </script>
 <br>
 <button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
