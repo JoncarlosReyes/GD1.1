@@ -15,12 +15,16 @@ canvas {
 var myGamePiece;
 var myObstacles = [];
 var myScore;
+var gamePaused = false;
+var startSound = new Audio('start.wav'); // Sound when the game starts
+var crashSound = new Audio('crash.wav'); // Sound when the player crashes
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
+    startSound.play(); // Play start sound
 }
 
 var myGameArea = {
@@ -32,9 +36,28 @@ var myGameArea = {
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown', function (e) {
+            myGameArea.keys = (myGameArea.keys || []);
+            myGameArea.keys[e.keyCode] = true;
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.keys[e.keyCode] = false;
+        })
         },
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    },
+    pause: function() {
+        if (!gamePaused) {
+            clearInterval(this.interval);
+            gamePaused = true;
+        } else {
+            this.interval = setInterval(updateGameArea, 20);
+            gamePaused = false;
+        }
     }
 }
 
@@ -86,6 +109,9 @@ function component(width, height, color, x, y, type) {
         if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
             crash = false;
         }
+        if (crash) {
+            crashSound.play(); // Play crash sound
+        }
         return crash;
     }
 }
@@ -94,6 +120,7 @@ function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
     for (i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
+            myGameArea.stop();
             return;
         } 
     }
@@ -116,6 +143,13 @@ function updateGameArea() {
     }
     myScore.text="SCORE: " + myGameArea.frameNo;
     myScore.update();
+
+    // Handle arrow key movements
+    if (myGameArea.keys && myGameArea.keys[37]) {myGamePiece.speedX = -1; } // Left arrow
+    if (myGameArea.keys && myGameArea.keys[39]) {myGamePiece.speedX = 1; } // Right arrow
+    if (myGameArea.keys && myGameArea.keys[38]) {myGamePiece.speedY = -1; } // Up arrow
+    if (myGameArea.keys && myGameArea.keys[40]) {myGamePiece.speedY = 1; } // Down arrow
+
     myGamePiece.newPos();
     myGamePiece.update();
 }
@@ -128,8 +162,10 @@ function everyinterval(n) {
 function accelerate(n) {
     myGamePiece.gravity = n;
 }
+
 </script>
 <br>
+<button onclick="myGameArea.pause()">Pause/Continue</button>
 <button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
 <p>Use the ACCELERATE button to stay in the air</p>
 <p>How long can you stay alive?</p>
