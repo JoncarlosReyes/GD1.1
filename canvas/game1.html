@@ -67,6 +67,9 @@ var myScore;
 var gamePaused = false;
 var startSound = new Audio('start.wav'); // Sound when the game starts
 var crashSound = new Audio('crash.wav'); // Sound when the player crashes
+var backgroundMusic = new Audio('background-music.mp3'); // Background music
+backgroundMusic.loop = true;  // Loop the background music
+backgroundMusic.volume = 0.5; // Set volume (optional)
 
 function startGame() {
     // Hide start screen and show the game container
@@ -79,6 +82,7 @@ function startGame() {
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
     startSound.play(); // Play start sound
+    backgroundMusic.play(); // Play background music
 }
 
 var myGameArea = {
@@ -106,9 +110,11 @@ var myGameArea = {
     pause: function() {
         if (!gamePaused) {
             clearInterval(this.interval);
+            backgroundMusic.pause();  // Pause background music
             gamePaused = true;
         } else {
             this.interval = setInterval(updateGameArea, 20);
+            backgroundMusic.play();  // Resume background music
             gamePaused = false;
         }
     }
@@ -220,3 +226,4 @@ function accelerate(n) {
 
 </body>
 </html>
+
