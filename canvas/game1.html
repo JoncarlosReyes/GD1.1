@@ -29,6 +29,7 @@ var myGamePiece;
 var myObstacles = [];
 var myScore;
 var moveDirection = '';
+var isAccelerating = false;
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
@@ -51,10 +52,18 @@ function startGame() {
             case 'ArrowDown':
                 moveDirection = 'down';
                 break;
+            case ' ':
+                isAccelerating = true;
+                accelerate(-0.2); // Start accelerating
+                break;
         }
     });
 
     window.addEventListener('keyup', function(e) {
+        if (e.key === ' ') {
+            isAccelerating = false;
+            accelerate(0.05); // Stop accelerating
+        }
         moveDirection = '';
     });
 }
@@ -202,10 +211,7 @@ function handleMovement() {
 </script>
 
 <br>
-<button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
-<p>Use the ACCELERATE button to stay in the air</p>
-<p>How long can you stay alive?</p>
+<!-- The SPACE BAR will now trigger acceleration -->
+<p>Press SPACE to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
-
-
