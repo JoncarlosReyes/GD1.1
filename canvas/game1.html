@@ -52,7 +52,7 @@ function startGame() {
             case 'ArrowDown':
                 moveDirection = 'down';
                 break;
-            case ' ':
+            case 'q':
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
                 break;
@@ -60,7 +60,7 @@ function startGame() {
     });
 
     window.addEventListener('keyup', function(e) {
-        if (e.key === ' ') {
+        if (e.key === 'q') {
             isAccelerating = false;
             accelerate(0.05); // Stop accelerating
         }
@@ -210,7 +210,7 @@ function handleMovement() {
 
 </script>
 
-<br>
-<p>Press SPACE to ACCELERATE. Use arrow keys or buttons to move.</p>
+<p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
+
