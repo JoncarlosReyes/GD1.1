@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -26,13 +26,13 @@ button {
 <script>
 
 var myGamePiece;
-var myBackground;
 var myObstacles = [];
 var myScore;
 var moveDirection = '';
 var isAccelerating = false;
 
 function startGame() {
+    myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
@@ -85,22 +85,21 @@ var myGameArea = {
 
 function component(width, height, color, x, y, type) {
     this.type = type;
+    this.score = 0;
     this.width = width;
     this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;
     this.x = x;
     this.y = y;
-    this.image = new Image();
-    if (type === "image") {
-        this.image.src = color;
-    }
+    this.gravity = 0;
+    this.gravitySpeed = 0;
     this.update = function() {
         var ctx = myGameArea.context;
-        if (this.type === "text") {
+        if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } else if (this.type === "image") {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -137,27 +136,22 @@ function component(width, height, color, x, y, type) {
 }
 
 function updateGameArea() {
-    myGameArea.clear();
-    myBackground.newPos();
-    myBackground.update();
-    myGamePiece.newPos();
-    myGamePiece.update();
-
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             return;
         } 
     }
+    myGameArea.clear();
     myGameArea.frameNo += 1;
     if (myGameArea.frameNo == 1 || everyinterval(150)) {
         x = myGameArea.canvas.width;
         minHeight = 20;
         maxHeight = 200;
-        height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
         minGap = 50;
         maxGap = 200;
-        gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
         myObstacles.push(new component(10, height, "green", x, 0));
         myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
     }
@@ -167,6 +161,8 @@ function updateGameArea() {
     }
     myScore.text = "SCORE: " + myGameArea.frameNo;
     myScore.update();
+    myGamePiece.newPos();
+    myGamePiece.update();
     handleMovement(); // Handle movement based on direction
 }
 
@@ -216,6 +212,4 @@ function handleMovement() {
 
 <p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
-</html>
-
-
+</html> 
