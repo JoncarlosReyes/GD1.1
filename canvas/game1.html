@@ -30,11 +30,14 @@ var myObstacles = [];
 var myScore;
 var moveDirection = '';
 var isAccelerating = false;
+var myMusic;
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+    myMusic = new sound("jam-spotlight-lazytoms-l-29565.mp3");
+    myMusic.play();
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -208,8 +211,23 @@ function handleMovement() {
     }
 }
 
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }    
+}
+
 </script>
 
 <p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
-</html> 
+</html>
