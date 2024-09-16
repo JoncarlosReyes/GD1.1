@@ -71,6 +71,8 @@ var backgroundMusic = new Audio('jam-spotlight-lazytoms-|-29565.mp3'); // Backgr
 backgroundMusic.loop = true;  // Loop the background music
 backgroundMusic.volume = 0.5; // Set volume (optional)
 
+var background, backgroundX = 0; // Variables to handle the background position
+
 function startGame() {
     // Hide start screen and show the game container
     document.getElementById('startScreen').style.display = 'none';
@@ -80,6 +82,11 @@ function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+
+    // Load the background GIF
+    background = new Image();
+    background.src = 'game1.gif';
+
     myGameArea.start();
     startSound.play(); // Play start sound
     backgroundMusic.play(); // Play background music
@@ -102,7 +109,17 @@ var myGameArea = {
         })
     },
     clear: function() {
+        // Create a repeating background effect
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.drawImage(background, backgroundX, 0, this.canvas.width, this.canvas.height);
+        this.context.drawImage(background, backgroundX + this.canvas.width, 0, this.canvas.width, this.canvas.height);
+        
+        backgroundX -= 1; // Move the background to the left
+
+        // Reset the background position to create an infinite loop
+        if (backgroundX == -this.canvas.width) {
+            backgroundX = 0;
+        }
     },
     stop: function() {
         clearInterval(this.interval);
@@ -214,16 +231,14 @@ function updateGameArea() {
 }
 
 function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+    if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
     return false;
 }
 
 function accelerate(n) {
     myGamePiece.gravity = n;
 }
-
 </script>
 
 </body>
 </html>
-
