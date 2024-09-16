@@ -64,7 +64,7 @@ function startGame() {
             isAccelerating = false;
             accelerate(0.05); // Stop accelerating
         }
-        moveDirection = '';
+        moveDirection = ''; // Clear movement direction when key is released
     });
 }
 
@@ -211,7 +211,6 @@ function handleMovement() {
 </script>
 
 <br>
-<!-- The SPACE BAR will now trigger acceleration -->
 <p>Press SPACE to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
