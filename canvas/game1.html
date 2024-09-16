@@ -7,16 +7,20 @@ canvas {
     border: 1px solid #d3d3d3;
     background-color: #f1f1f1;
 }
+button {
+    font-size: 18px;
+    margin: 5px;
+}
 </style>
 </head>
 <body onload="startGame()">
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="moveup()">UP</button><br><br>
-  <button onclick="moveleft()">LEFT</button>
-  <button onclick="moveright()">RIGHT</button><br><br>
-  <button onclick="movedown()">DOWN</button>
+  <button onclick="move('up')">UP</button><br><br>
+  <button onclick="move('left')">LEFT</button>
+  <button onclick="move('right')">RIGHT</button><br><br>
+  <button onclick="move('down')">DOWN</button>
 </div>
 
 <script>
@@ -24,12 +28,35 @@ canvas {
 var myGamePiece;
 var myObstacles = [];
 var myScore;
+var moveDirection = '';
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
+
+    // Add event listeners for keyboard input
+    window.addEventListener('keydown', function(e) {
+        switch(e.key) {
+            case 'ArrowUp':
+                moveDirection = 'up';
+                break;
+            case 'ArrowLeft':
+                moveDirection = 'left';
+                break;
+            case 'ArrowRight':
+                moveDirection = 'right';
+                break;
+            case 'ArrowDown':
+                moveDirection = 'down';
+                break;
+        }
+    });
+
+    window.addEventListener('keyup', function(e) {
+        moveDirection = '';
+    });
 }
 
 var myGameArea = {
@@ -127,6 +154,7 @@ function updateGameArea() {
     myScore.update();
     myGamePiece.newPos();
     myGamePiece.update();
+    handleMovement(); // Handle movement based on direction
 }
 
 function everyinterval(n) {
@@ -138,22 +166,39 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-// Directional movement functions
-function moveup() {
-    myGamePiece.speedY = -1;
+// Handle directional movement based on both buttons and arrow keys
+function move(direction) {
+    switch(direction) {
+        case 'up':
+            myGamePiece.speedY = -1;
+            break;
+        case 'left':
+            myGamePiece.speedX = -1;
+            break;
+        case 'right':
+            myGamePiece.speedX = 1;
+            break;
+        case 'down':
+            myGamePiece.speedY = 1;
+            break;
+    }
 }
 
-function moveleft() {
-    myGamePiece.speedX = -1;
+function handleMovement() {
+    if (moveDirection === 'up') {
+        myGamePiece.speedY = -1;
+    } else if (moveDirection === 'left') {
+        myGamePiece.speedX = -1;
+    } else if (moveDirection === 'right') {
+        myGamePiece.speedX = 1;
+    } else if (moveDirection === 'down') {
+        myGamePiece.speedY = 1;
+    } else {
+        myGamePiece.speedX = 0;
+        myGamePiece.speedY = 0;
+    }
 }
 
-function moveright() {
-    myGamePiece.speedX = 1;
-}
-
-function movedown() {
-    myGamePiece.speedY = 1;
-}
 </script>
 
 <br>
@@ -162,4 +207,5 @@ function movedown() {
 <p>How long can you stay alive?</p>
 </body>
 </html>
+
 
