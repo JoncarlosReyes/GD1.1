@@ -1,140 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <style>
-        canvas {
-            border: 1px solid #d3d3d3;
-            background-color: #f1f1f1;
-        }
-
-        #startScreen {
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #333;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-            text-align: center;
-        }
-
-        #startButton {
-            padding: 10px 20px;
-            font-size: 24px;
-            background-color: #28a745;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-
-        #startButton:hover {
-            background-color: #218838;
-        }
-
-        #gameContainer {
-            display: none;
-        }
-    </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
 </head>
-<body>
-
-<!-- Start Screen -->
-<div id="startScreen">
-    <div>
-        <h1>Welcome to the Game</h1>
-        <p>Press Start to Begin</p>
-        <button id="startButton" onclick="startGame()">Start Game</button>
-    </div>
-</div>
-
-<!-- Game Container -->
-<div id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
-    <br>
-    <button onclick="myGameArea.pause()">Pause/Continue</button>
-    <button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
-    <p>Use the ACCELERATE button to stay in the air</p>
-    <p>How long can you stay alive?</p>
-</div>
-
+<body onload="startGame()">
 <script>
+
 var myGamePiece;
 var myObstacles = [];
 var myScore;
-var gamePaused = false;
-var startSound = new Audio('start.wav'); // Sound when the game starts
-var crashSound = new Audio('crash.wav'); // Sound when the player crashes
-var backgroundMusic = new Audio('jam-spotlight-lazytoms-|-29565.mp3'); // Background music
-backgroundMusic.loop = true;  // Loop the background music
-backgroundMusic.volume = 0.5; // Set volume (optional)
-
-var background, backgroundX = 0; // Variables to handle the background position
 
 function startGame() {
-    // Hide start screen and show the game container
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('gameContainer').style.display = 'block';
-
-    // Initialize the game after showing the container
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
-
-    // Load the background GIF
-    background = new Image();
-    background.src = 'game1.gif';
-    background.onload = function() {
-        myGameArea.start();
-        startSound.play(); // Play start sound
-        backgroundMusic.play(); // Play background music
-    };
+    myGameArea.start();
 }
 
 var myGameArea = {
-    canvas: document.getElementById("gameCanvas"),
-    start: function() {
+    canvas : document.createElement("canvas"),
+    start : function() {
         this.canvas.width = 480;
         this.canvas.height = 270;
         this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
-        window.addEventListener('keydown', function (e) {
-            myGameArea.keys = (myGameArea.keys || []);
-            myGameArea.keys[e.keyCode] = true;
-        });
-        window.addEventListener('keyup', function (e) {
-            myGameArea.keys[e.keyCode] = false;
-        });
-    },
-    clear: function() {
-        // Create a repeating background effect
+        },
+    clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.context.drawImage(background, backgroundX, 0, this.canvas.width, this.canvas.height);
-        this.context.drawImage(background, backgroundX + this.canvas.width, 0, this.canvas.width, this.canvas.height);
-        
-        backgroundX -= 1; // Move the background to the left
-
-        // Reset the background position to create an infinite loop
-        if (backgroundX <= -this.canvas.width) {
-            backgroundX = 0;
-        }
-    },
-    stop: function() {
-        clearInterval(this.interval);
-    },
-    pause: function() {
-        if (!gamePaused) {
-            clearInterval(this.interval);
-            backgroundMusic.pause();  // Pause background music
-            gamePaused = true;
-        } else {
-            this.interval = setInterval(updateGameArea, 20);
-            backgroundMusic.play();  // Resume background music
-            gamePaused = false;
-        }
     }
 }
 
@@ -144,13 +44,13 @@ function component(width, height, color, x, y, type) {
     this.width = width;
     this.height = height;
     this.speedX = 0;
-    this.speedY = 0;
+    this.speedY = 0;    
     this.x = x;
     this.y = y;
     this.gravity = 0;
     this.gravitySpeed = 0;
     this.update = function() {
-        var ctx = myGameArea.context;
+        ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
@@ -186,20 +86,16 @@ function component(width, height, color, x, y, type) {
         if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
             crash = false;
         }
-        if (crash) {
-            crashSound.play(); // Play crash sound
-        }
         return crash;
     }
 }
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    for (var i = 0; i < myObstacles.length; i += 1) {
+    for (i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
-            myGameArea.stop();
             return;
-        }
+        } 
     }
     myGameArea.clear();
     myGameArea.frameNo += 1;
@@ -207,32 +103,25 @@ function updateGameArea() {
         x = myGameArea.canvas.width;
         minHeight = 20;
         maxHeight = 200;
-        height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
         minGap = 50;
         maxGap = 200;
-        gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
         myObstacles.push(new component(10, height, "green", x, 0));
         myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
     }
-    for (var i = 0; i < myObstacles.length; i += 1) {
-        myObstacles[i].x -= 1;
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].x += -1;
         myObstacles[i].update();
     }
-    myScore.text = "SCORE: " + myGameArea.frameNo;
+    myScore.text="SCORE: " + myGameArea.frameNo;
     myScore.update();
-
-    // Handle arrow key movements
-    if (myGameArea.keys && myGameArea.keys[37]) {myGamePiece.speedX = -1;} // Left arrow
-    if (myGameArea.keys && myGameArea.keys[39]) {myGamePiece.speedX = 1;}  // Right arrow
-    if (myGameArea.keys && myGameArea.keys[38]) {myGamePiece.speedY = -1;} // Up arrow
-    if (myGameArea.keys && myGameArea.keys[40]) {myGamePiece.speedY = 1;}  // Down arrow
-
     myGamePiece.newPos();
     myGamePiece.update();
 }
 
 function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
     return false;
 }
 
@@ -240,6 +129,9 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 </script>
-
+<br>
+<button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
+<p>Use the ACCELERATE button to stay in the air</p>
+<p>How long can you stay alive?</p>
 </body>
 </html>
