@@ -30,12 +30,14 @@ var myObstacles = [];
 var myScore;
 var moveDirection = '';
 var isAccelerating = false;
+var myMusic;
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
+    Mymusic=new sound ("jam-spotlight-lazytoms-l-29565%20(4).mp3";
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
