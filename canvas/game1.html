@@ -54,8 +54,9 @@ function startGame() {
     myGamePiece.gravity = 0.05;
     myScore = 0;
     myMusic = new sound("canvasgamemusic.mp3");
-    mySpeedSound = new sound("speedboost.mpe"); // Sound effect for speed boost
+    mySpeedSound = new sound("speedboost.mp3"); // Sound effect for speed boost
     myGameArea.start();
+    playMusic(); // Start playing music on game start
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
@@ -259,17 +260,19 @@ function boostSpeed() {
 
         // Reset speed after boost duration
         boostTimeout = setTimeout(function() {
-            speed /= tempSpeed;
+            speed = originalSpeed;
             speedBoostActive = false;
         }, boostDuration);
     }
 }
 
-// Handle directional movement based on both buttons and arrow keys
-function move(direction) {
-    switch(direction) {
+function handleMovement() {
+    switch(moveDirection) {
         case 'up':
             myGamePiece.speedY = -1;
+            break;
+        case 'down':
+            myGamePiece.speedY = 1;
             break;
         case 'left':
             myGamePiece.speedX = -1;
@@ -277,33 +280,17 @@ function move(direction) {
         case 'right':
             myGamePiece.speedX = 1;
             break;
-        case 'down':
-            myGamePiece.speedY = 1;
+        default:
+            myGamePiece.speedX = 0;
+            myGamePiece.speedY = 0;
             break;
     }
 }
 
-function handleMovement() {
-    if (moveDirection === 'up') {
-        myGamePiece.speedY = -1;
-    } else if (moveDirection === 'down') {
-        myGamePiece.speedY = 1;
-    } else {
-        myGamePiece.speedY = 0;
-    }
-
-    if (moveDirection === 'left') {
-        myGamePiece.speedX = -1;
-    } else if (moveDirection === 'right') {
-        myGamePiece.speedX = 1;
-    } else {
-        myGamePiece.speedX = 0;
-    }
-}
-
 function playMusic() {
-    if (!myMusic.isPlaying()) {
+    if (!myMusic.isPlaying) {
         myMusic.play();
+        myMusic.isPlaying = true;
     }
 }
 
@@ -318,11 +305,12 @@ function resumeGame() {
 function resetGame() {
     myGameArea.stop();
     myObstacles = [];
-    myScore = 0;
-    speed = 1; // Reset speed
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
-    myGameArea.resume();
+    speed = 1; // Reset speed
+    document.getElementById('score').innerText = "SCORE: 0";
+    myGameArea.frameNo = 0;
+    playMusic(); // Resume music
 }
 
 function sound(src) {
@@ -339,10 +327,10 @@ function sound(src) {
         this.sound.pause();
         this.sound.currentTime = 0;
     }
-    this.isPlaying = function() {
-        return !this.sound.paused;
-    }
+    this.isPlaying = false; // To track if the sound is currently playing
 }
+
 </script>
+
 </body>
 </html>
