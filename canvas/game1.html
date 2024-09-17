@@ -92,7 +92,7 @@ var myGameArea = {
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
-        this.background.src = 'iceyback.jpg'; // Your background image file
+        this.background.src = 'game1.gif'; // Your background image file
         this.background.onload = () => {
             gameInterval = setInterval(updateGameArea, 20);
         };
