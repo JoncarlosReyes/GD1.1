@@ -88,6 +88,13 @@ function startGame() {
         }
         moveDirection = ''; // Clear movement direction when key is released
     });
+
+    // Add a user interaction event to ensure audio can play in modern browsers
+    document.addEventListener('click', function() {
+        if (!myMusic.isPlaying) {
+            playMusic();
+        }
+    });
 }
 
 var myGameArea = {
