@@ -34,7 +34,7 @@ var isAccelerating = false;
 var myMusic;
 
 function startGame() {
-    myGamePiece = new component("peguin.png");
+    myGamePiece = new component(20px,"peguin.png",20,20);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myMusic = new sound("canvasgamemusic.mp3.mp3");
