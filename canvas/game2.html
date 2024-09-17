@@ -19,7 +19,7 @@ button {
 </head>
 <body onload="startGame()">
 
-<!-- Control Buttons -->
+<!-- Control Buttons (Directional buttons removed) -->
 <div style="text-align:center;width:480px;">
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
@@ -36,46 +36,43 @@ var myScore;
 var moveDirection = '';
 var isAccelerating = false;
 var myMusic;
+var explosionSound;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
-var gameOver = false; // Track if the game is over due to collision
-var explosionImage = new Image(); // Explosion image for collision
-explosionImage.src = "firebomb.png";
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = 0;
-    myMusic = new sound("canvasgamemusic.mp3.mp3");
+    myMusic = new sound("canvasgamemusic.mp3.mp3", 0.5); // Background music at half volume
+    explosionSound = new sound("explodesound.mp3", 1.0); // Explosion sound at full volume
     myGameArea.start();
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
-        if (!gameOver) {
-            switch(e.key) {
-                case 'ArrowUp':
-                    moveDirection = 'up';
-                    playMusic();
-                    break;
-                case 'ArrowLeft':
-                    moveDirection = 'left';
-                    playMusic();
-                    break;
-                case 'ArrowRight':
-                    moveDirection = 'right';
-                    playMusic();
-                    break;
-                case 'ArrowDown':
-                    moveDirection = 'down';
-                    playMusic();
-                    break;
-                case 'q':
-                    isAccelerating = true;
-                    accelerate(-0.2); // Start accelerating
-                    playMusic();
-                    break;
-            }
+        switch(e.key) {
+            case 'ArrowUp':
+                moveDirection = 'up';
+                playMusic();
+                break;
+            case 'ArrowLeft':
+                moveDirection = 'left';
+                playMusic();
+                break;
+            case 'ArrowRight':
+                moveDirection = 'right';
+                playMusic();
+                break;
+            case 'ArrowDown':
+                moveDirection = 'down';
+                playMusic();
+                break;
+            case 'q':
+                isAccelerating = true;
+                accelerate(-0.2); // Start accelerating
+                playMusic();
+                break;
         }
     });
 
@@ -111,7 +108,7 @@ var myGameArea = {
         myMusic.stop(); // Stop music when game is paused
     },
     resume: function() {
-        if (gamePaused && !gameOver) {
+        if (gamePaused) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
         }
@@ -186,16 +183,15 @@ function component(width, height, color, x, y, type) {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-
-    if (gameOver) return; // Stop updating if game over
-
+    
     myGameArea.clear();
     myGameArea.context.drawImage(myGameArea.background, 0, 0, myGameArea.canvas.width, myGameArea.canvas.height); // Draw background image
 
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
+            // Handle collision
             console.log("Collision detected with obstacle!");
-            triggerExplosion(); // Show explosion and stop music
+            handleExplosion(); // Show explosion and stop game
             return;
         } 
     }
@@ -231,14 +227,6 @@ function updateGameArea() {
     handleMovement(); // Handle movement based on direction
 }
 
-function triggerExplosion() {
-    // Draw the explosion at the player's location
-    var ctx = myGameArea.context;
-    ctx.drawImage(explosionImage, myGamePiece.x, myGamePiece.y, myGamePiece.width, myGamePiece.height);
-    myMusic.stop(); // Stop music when the explosion occurs
-    gameOver = true; // Set game over state to true
-}
-
 function everyinterval(n) {
     if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
     return false;
@@ -265,9 +253,23 @@ function handleMovement() {
 }
 
 function playMusic() {
-    if (myMusic && !gameOver) {
+    if (myMusic) {
         myMusic.play();
     }
+}
+
+function handleExplosion() {
+    myMusic.stop(); // Stop background music
+    explosionSound.play(); // Play explosion sound
+    var explosion = new component(100, 100, "firebomb.png", myGamePiece.x, myGamePiece.y, "image");
+    explosion.update = function() {
+        var ctx = myGameArea.context;
+        if (this.image.complete) {
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        }
+    }
+    explosion.update(); // Show explosion animation
+    setTimeout(resetGame, 1000); // Reset the game after 1 second
 }
 
 function pauseGame() {
@@ -286,11 +288,11 @@ function resetGame() {
     myScore = 0;
     speed = 1; // Reset speed to base value
     document.getElementById('score').innerText = "SCORE: 0";
-    gameOver = false; // Reset game over state
     myGameArea.resume();
+    myMusic.play(); // Resume background music
 }
 
-function sound(src) {
+function sound(src, volume) {
     this.sound = document.createElement("audio");
     this.sound.src = src;
     this.sound.setAttribute("preload", "auto");
@@ -298,6 +300,7 @@ function sound(src) {
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
     this.play = function() {
+        this.sound.volume = volume || 1.0; // Default volume is 1.0
         this.sound.play();
     }
     this.stop = function() {
