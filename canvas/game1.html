@@ -21,10 +21,10 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up'); playMusic()">UP</button><br><br>
-  <button onclick="move('left'); playMusic()">LEFT</button>
-  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
-  <button onclick="move('down'); playMusic()">DOWN</button><br><br>
+  <button onclick="move('up')">UP</button><br><br>
+  <button onclick="move('left')">LEFT</button>
+  <button onclick="move('right')">RIGHT</button><br><br>
+  <button onclick="move('down')">DOWN</button><br><br>
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
   <button onclick="resetGame()">RESET</button>
@@ -54,8 +54,12 @@ function startGame() {
     myScore = 0;
     myMusic = new sound("canvasgamemusic.mp3");
     myGameArea.start();
-    playMusic(); // Start playing music on game start
-
+    
+    // Ensure audio can be played after user interaction
+    document.addEventListener('click', function() {
+        playMusic();
+    });
+    
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
         switch(e.key) {
@@ -87,13 +91,6 @@ function startGame() {
             accelerate(0.05); // Stop accelerating
         }
         moveDirection = ''; // Clear movement direction when key is released
-    });
-
-    // Add a user interaction event to ensure audio can play in modern browsers
-    document.addEventListener('click', function() {
-        if (!myMusic.isPlaying) {
-            playMusic();
-        }
     });
 }
 
@@ -285,10 +282,8 @@ function handleMovement() {
 }
 
 function playMusic() {
-    if (!myMusic.isPlaying) {
-        myMusic.play();
-        myMusic.isPlaying = true;
-    }
+    console.log("Attempting to play music");
+    myMusic.play();
 }
 
 function pauseGame() {
@@ -325,7 +320,10 @@ function sound(src) {
     this.isPlaying = false;
     
     this.play = function() {
-        this.sound.play();
+        console.log("Playing music");
+        this.sound.play().catch(error => {
+            console.error("Error playing music: ", error);
+        });
         this.isPlaying = true;
     }
     
