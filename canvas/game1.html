@@ -205,7 +205,6 @@ function updateGameArea() {
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             // Handle collision
-            console.log("Collision detected with obstacle!");
             handleExplosion(); // Show explosion and stop game
             return;
         } 
@@ -242,7 +241,7 @@ function updateGameArea() {
     handleMovement(); // Handle movement based on direction
 
     if (!gamePaused) {
-        setTimeout(() => requestAnimationFrame(updateGameArea), gifFrameRate); // Continue the game loop with delay
+        requestAnimationFrame(updateGameArea); // Continue the game loop
     }
 }
 
@@ -280,7 +279,6 @@ function playMusic() {
 function handleExplosion() {
     myMusic.stop(); // Stop background music
     explosionSound.play(); // Play explosion sound effect
-    // You can optionally display an explosion animation here
     setTimeout(resetGame, 1000); // Reset the game after 1 second
 }
 
