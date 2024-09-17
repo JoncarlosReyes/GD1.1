@@ -19,12 +19,8 @@ button {
 </head>
 <body onload="startGame()">
 
-<!-- Game Control Buttons -->
+<!-- Control Buttons (Directional buttons removed) -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up'); playMusic()">UP</button><br><br>
-  <button onclick="move('left'); playMusic()">LEFT</button>
-  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
-  <button onclick="move('down'); playMusic()">DOWN</button><br><br>
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
   <button onclick="resetGame()">RESET</button>
@@ -149,9 +145,6 @@ function component(width, height, color, x, y, type) {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-        // No longer drawing hitbox
-        // ctx.strokeStyle = 'red';
-        // ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
     this.newPos = function() {
@@ -241,24 +234,7 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-// Handle directional movement based on both buttons and arrow keys
-function move(direction) {
-    switch(direction) {
-        case 'up':
-            myGamePiece.speedY = -1;
-            break;
-        case 'left':
-            myGamePiece.speedX = -1;
-            break;
-        case 'right':
-            myGamePiece.speedX = 1;
-            break;
-        case 'down':
-            myGamePiece.speedY = 1;
-            break;
-    }
-}
-
+// Handle directional movement based on arrow keys (buttons removed)
 function handleMovement() {
     if (moveDirection === 'up') {
         myGamePiece.speedY = -1;
