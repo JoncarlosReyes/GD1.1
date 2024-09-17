@@ -21,10 +21,10 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up')">UP</button><br><br>
-  <button onclick="move('left')">LEFT</button>
-  <button onclick="move('right')">RIGHT</button><br><br>
-  <button onclick="move('down')">DOWN</button><br><br>
+  <button onclick="move('up'); playMusic()">UP</button><br><br>
+  <button onclick="move('left'); playMusic()">LEFT</button>
+  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
+  <button onclick="move('down'); playMusic()">DOWN</button><br><br>
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
   <button onclick="resetGame()">RESET</button>
@@ -43,44 +43,37 @@ var myMusic;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
-var tempSpeed = 2; // Speed multiplier for temporary speed boost
-var boostDuration = 2000; // Duration of speed boost in milliseconds
-var speedBoostActive = false; // Flag to track if speed boost is active
-var boostTimeout; // Variable to store the timeout for the speed boost
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = 0;
-    myMusic = new sound("canvasgamemusic.mp3");
+    myMusic = new sound("canvasgamemusic.mp3.mp3");
     myGameArea.start();
-    
-    // Ensure audio can be played after user interaction
-    document.addEventListener('click', function() {
-        playMusic();
-    });
-    
+
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
         switch(e.key) {
             case 'ArrowUp':
                 moveDirection = 'up';
+                playMusic();
                 break;
             case 'ArrowLeft':
                 moveDirection = 'left';
+                playMusic();
                 break;
             case 'ArrowRight':
                 moveDirection = 'right';
+                playMusic();
                 break;
             case 'ArrowDown':
                 moveDirection = 'down';
+                playMusic();
                 break;
             case 'q':
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
-                break;
-            case 'k':
-                boostSpeed(); // Speed up the game piece temporarily
+                playMusic();
                 break;
         }
     });
@@ -120,7 +113,6 @@ var myGameArea = {
         if (gamePaused) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
-            playMusic(); // Resume music when game is resumed
         }
     }
 }
@@ -143,7 +135,7 @@ function component(width, height, color, x, y, type) {
             this.update();
         };
         this.image.onerror = () => {
-            console.error(`Failed to load image: ${color}`);
+            console.error(`Failed to load image: ${color}`); 
         };
     }
     
@@ -157,6 +149,9 @@ function component(width, height, color, x, y, type) {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
+        // No longer drawing hitbox
+        // ctx.strokeStyle = 'red';
+        // ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
     this.newPos = function() {
@@ -246,27 +241,11 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-function boostSpeed() {
-    if (!speedBoostActive) {
-        speedBoostActive = true;
-        var originalSpeed = speed;
-        speed *= tempSpeed; // Temporarily increase speed
-
-        // Reset speed after boost duration
-        boostTimeout = setTimeout(function() {
-            speed = originalSpeed;
-            speedBoostActive = false;
-        }, boostDuration);
-    }
-}
-
-function handleMovement() {
-    switch(moveDirection) {
+// Handle directional movement based on both buttons and arrow keys
+function move(direction) {
+    switch(direction) {
         case 'up':
             myGamePiece.speedY = -1;
-            break;
-        case 'down':
-            myGamePiece.speedY = 1;
             break;
         case 'left':
             myGamePiece.speedX = -1;
@@ -274,16 +253,31 @@ function handleMovement() {
         case 'right':
             myGamePiece.speedX = 1;
             break;
-        default:
-            myGamePiece.speedX = 0;
-            myGamePiece.speedY = 0;
+        case 'down':
+            myGamePiece.speedY = 1;
             break;
     }
 }
 
+function handleMovement() {
+    if (moveDirection === 'up') {
+        myGamePiece.speedY = -1;
+    } else if (moveDirection === 'left') {
+        myGamePiece.speedX = -1;
+    } else if (moveDirection === 'right') {
+        myGamePiece.speedX = 1;
+    } else if (moveDirection === 'down') {
+        myGamePiece.speedY = 1;
+    } else {
+        myGamePiece.speedX = 0;
+        myGamePiece.speedY = 0;
+    }
+}
+
 function playMusic() {
-    console.log("Attempting to play music");
-    myMusic.play();
+    if (myMusic) {
+        myMusic.play();
+    }
 }
 
 function pauseGame() {
@@ -291,25 +285,19 @@ function pauseGame() {
 }
 
 function resumeGame() {
-    if (gamePaused) {
-        myGameArea.resume();
-        playMusic(); // Resume music when game is resumed
-    }
+    myGameArea.resume();
 }
 
 function resetGame() {
     myGameArea.stop();
     myObstacles = [];
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
-    myGamePiece.gravity = 0.05;
-    speed = 1; // Reset speed
+    myScore = 0;
+    speed = 1; // Reset speed to base value
     document.getElementById('score').innerText = "SCORE: 0";
-    myGameArea.frameNo = 0;
-    myGameArea.resume(); // Restart the game
-    playMusic(); // Restart background music
+    myGameArea.resume();
 }
 
-// Sound object constructor
 function sound(src) {
     this.sound = document.createElement("audio");
     this.sound.src = src;
@@ -317,20 +305,11 @@ function sound(src) {
     this.sound.setAttribute("controls", "none");
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
-    this.isPlaying = false;
-    
     this.play = function() {
-        console.log("Playing music");
-        this.sound.play().catch(error => {
-            console.error("Error playing music: ", error);
-        });
-        this.isPlaying = true;
+        this.sound.play();
     }
-    
     this.stop = function() {
         this.sound.pause();
-        this.sound.currentTime = 0;
-        this.isPlaying = false;
     }
 }
 
