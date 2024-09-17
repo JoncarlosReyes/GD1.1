@@ -42,7 +42,7 @@ var gameInterval;
 var speed = 1; // Base speed for obstacle movement
 var backgroundGif; // For handling GIF animation
 var gifFrame = 0; // Current GIF frame
-var gifFrameRate = 100; // Time in ms per frame
+var gifFrameRate = 200; // Time in ms per frame (slower frame rate for slower animation)
 var gifFrameWidth; // Width of each frame in GIF
 var gifFrameHeight; // Height of the GIF
 
@@ -55,7 +55,7 @@ function startGame() {
     
     // Load the GIF
     backgroundGif = new Image();
-    backgroundGif.src = 'snowy.gif'; // Your GIF file
+    backgroundGif.src = 'animated_background.gif'; // Your GIF file
     backgroundGif.onload = () => {
         gifFrameWidth = backgroundGif.width / 4; // Number of frames in the GIF
         gifFrameHeight = backgroundGif.height;
@@ -242,7 +242,7 @@ function updateGameArea() {
     handleMovement(); // Handle movement based on direction
 
     if (!gamePaused) {
-        requestAnimationFrame(updateGameArea); // Continue the game loop
+        setTimeout(() => requestAnimationFrame(updateGameArea), gifFrameRate); // Continue the game loop with delay
     }
 }
 
