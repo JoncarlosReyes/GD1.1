@@ -19,7 +19,7 @@ button {
 </head>
 <body onload="startGame()">
 
-<!-- Control Buttons (Directional buttons removed) -->
+<!-- Control Buttons -->
 <div style="text-align:center;width:480px;">
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
@@ -39,6 +39,9 @@ var myMusic;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
+var gameOver = false; // Track if the game is over due to collision
+var explosionImage = new Image(); // Explosion image for collision
+explosionImage.src = "firebomb.png";
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
@@ -49,28 +52,30 @@ function startGame() {
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
-        switch(e.key) {
-            case 'ArrowUp':
-                moveDirection = 'up';
-                playMusic();
-                break;
-            case 'ArrowLeft':
-                moveDirection = 'left';
-                playMusic();
-                break;
-            case 'ArrowRight':
-                moveDirection = 'right';
-                playMusic();
-                break;
-            case 'ArrowDown':
-                moveDirection = 'down';
-                playMusic();
-                break;
-            case 'q':
-                isAccelerating = true;
-                accelerate(-0.2); // Start accelerating
-                playMusic();
-                break;
+        if (!gameOver) {
+            switch(e.key) {
+                case 'ArrowUp':
+                    moveDirection = 'up';
+                    playMusic();
+                    break;
+                case 'ArrowLeft':
+                    moveDirection = 'left';
+                    playMusic();
+                    break;
+                case 'ArrowRight':
+                    moveDirection = 'right';
+                    playMusic();
+                    break;
+                case 'ArrowDown':
+                    moveDirection = 'down';
+                    playMusic();
+                    break;
+                case 'q':
+                    isAccelerating = true;
+                    accelerate(-0.2); // Start accelerating
+                    playMusic();
+                    break;
+            }
         }
     });
 
@@ -106,7 +111,7 @@ var myGameArea = {
         myMusic.stop(); // Stop music when game is paused
     },
     resume: function() {
-        if (gamePaused) {
+        if (gamePaused && !gameOver) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
         }
@@ -181,15 +186,16 @@ function component(width, height, color, x, y, type) {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    
+
+    if (gameOver) return; // Stop updating if game over
+
     myGameArea.clear();
     myGameArea.context.drawImage(myGameArea.background, 0, 0, myGameArea.canvas.width, myGameArea.canvas.height); // Draw background image
 
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
-            // Handle collision
             console.log("Collision detected with obstacle!");
-            resetGame(); // Reset the game on collision
+            triggerExplosion(); // Show explosion
             return;
         } 
     }
@@ -223,6 +229,13 @@ function updateGameArea() {
     myGamePiece.newPos();
     myGamePiece.update();
     handleMovement(); // Handle movement based on direction
+}
+
+function triggerExplosion() {
+    // Draw the explosion at the player's location
+    var ctx = myGameArea.context;
+    ctx.drawImage(explosionImage, myGamePiece.x, myGamePiece.y, myGamePiece.width, myGamePiece.height);
+    gameOver = true; // Set game over state to true
 }
 
 function everyinterval(n) {
@@ -272,6 +285,7 @@ function resetGame() {
     myScore = 0;
     speed = 1; // Reset speed to base value
     document.getElementById('score').innerText = "SCORE: 0";
+    gameOver = false; // Reset game over state
     myGameArea.resume();
 }
 
