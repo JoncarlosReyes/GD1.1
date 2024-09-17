@@ -195,7 +195,7 @@ function updateGameArea() {
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             console.log("Collision detected with obstacle!");
-            triggerExplosion(); // Show explosion
+            triggerExplosion(); // Show explosion and stop music
             return;
         } 
     }
@@ -235,6 +235,7 @@ function triggerExplosion() {
     // Draw the explosion at the player's location
     var ctx = myGameArea.context;
     ctx.drawImage(explosionImage, myGamePiece.x, myGamePiece.y, myGamePiece.width, myGamePiece.height);
+    myMusic.stop(); // Stop music when the explosion occurs
     gameOver = true; // Set game over state to true
 }
 
@@ -264,7 +265,7 @@ function handleMovement() {
 }
 
 function playMusic() {
-    if (myMusic) {
+    if (myMusic && !gameOver) {
         myMusic.play();
     }
 }
