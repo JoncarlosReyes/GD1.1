@@ -19,7 +19,7 @@ button {
 </head>
 <body onload="startGame()">
 
-<!-- Control Buttons -->
+<!-- Control Buttons (Directional buttons removed) -->
 <div style="text-align:center;width:480px;">
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
@@ -40,27 +40,14 @@ var explosionSound;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
-var backgroundGif; // For handling GIF animation
-var gifFrame = 0; // Current GIF frame
-var gifFrameRate = 200; // Time in ms per frame (slower frame rate for slower animation)
-var gifFrameWidth; // Width of each frame in GIF
-var gifFrameHeight; // Height of the GIF
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = 0;
     myMusic = new sound("canvasgamemusic.mp3.mp3", 0.5); // Background music at half volume
-    explosionSound = new sound("explosion.mp3", 1.0); // Explosion sound at full volume
-    
-    // Load the GIF
-    backgroundGif = new Image();
-    backgroundGif.src = 'animated_background.gif'; // Your GIF file
-    backgroundGif.onload = () => {
-        gifFrameWidth = backgroundGif.width / 4; // Number of frames in the GIF
-        gifFrameHeight = backgroundGif.height;
-        myGameArea.start();
-    };
+    explosionSound = new sound("explodesound.mp3", 1.0); // Explosion sound at full volume
+    myGameArea.start();
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
@@ -100,26 +87,30 @@ function startGame() {
 
 var myGameArea = {
     canvas: document.createElement("canvas"),
-    context: null,
+    background: new Image(),
     start: function() {
         this.canvas.width = 480;
         this.canvas.height = 270;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
-        requestAnimationFrame(updateGameArea); // Use requestAnimationFrame for smooth animation
+        this.background.src = 'iceyback.jpg'; // Your background image file
+        this.background.onload = () => {
+            gameInterval = setInterval(updateGameArea, 20);
+        };
     },
     clear: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
     stop: function() {
+        clearInterval(gameInterval);
         gamePaused = true;
         myMusic.stop(); // Stop music when game is paused
     },
     resume: function() {
         if (gamePaused) {
+            gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
-            requestAnimationFrame(updateGameArea); // Resume game loop
         }
     }
 }
@@ -191,20 +182,15 @@ function component(width, height, color, x, y, type) {
 }
 
 function updateGameArea() {
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    
     myGameArea.clear();
-    
-    // Draw the current GIF frame
-    myGameArea.context.drawImage(backgroundGif, gifFrameWidth * gifFrame, 0, gifFrameWidth, gifFrameHeight, 0, 0, myGameArea.canvas.width, myGameArea.canvas.height);
-    
-    gifFrame++;
-    if (gifFrame >= 4) { // Adjust based on the number of frames in the GIF
-        gifFrame = 0;
-    }
+    myGameArea.context.drawImage(myGameArea.background, 0, 0, myGameArea.canvas.width, myGameArea.canvas.height); // Draw background image
 
-    // Update game elements
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             // Handle collision
+            console.log("Collision detected with obstacle!");
             handleExplosion(); // Show explosion and stop game
             return;
         } 
@@ -212,13 +198,13 @@ function updateGameArea() {
     
     myGameArea.frameNo += 1;
     if (myGameArea.frameNo == 1 || everyinterval(100)) { // Increase frequency of obstacles
-        var x = myGameArea.canvas.width;
-        var minHeight = 20;
-        var maxHeight = 200;
-        var height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
-        var minGap = 50;
-        var maxGap = 200;
-        var gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        x = myGameArea.canvas.width;
+        minHeight = 20;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 50;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
         // Adjust obstacle length for bottom obstacles
         var bottomObstacleHeight = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight + 20); // Add 20 pixels
         myObstacles.push(new component(10, height, "treetrunk.png", x, 0, "image"));
@@ -239,10 +225,6 @@ function updateGameArea() {
     myGamePiece.newPos();
     myGamePiece.update();
     handleMovement(); // Handle movement based on direction
-
-    if (!gamePaused) {
-        requestAnimationFrame(updateGameArea); // Continue the game loop
-    }
 }
 
 function everyinterval(n) {
@@ -278,7 +260,15 @@ function playMusic() {
 
 function handleExplosion() {
     myMusic.stop(); // Stop background music
-    explosionSound.play(); // Play explosion sound effect
+    explosionSound.play(); // Play explosion sound
+    var explosion = new component(100, 100, "firebomb.png", myGamePiece.x, myGamePiece.y, "image");
+    explosion.update = function() {
+        var ctx = myGameArea.context;
+        if (this.image.complete) {
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        }
+    }
+    explosion.update(); // Show explosion animation
     setTimeout(resetGame, 1000); // Reset the game after 1 second
 }
 
