@@ -17,10 +17,10 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up')">UP</button><br><br>
-  <button onclick="move('left')">LEFT</button>
-  <button onclick="move('right')">RIGHT</button><br><br>
-  <button onclick="move('down')">DOWN</button>
+  <button onclick="move('up'); playMusic()">UP</button><br><br>
+  <button onclick="move('left'); playMusic()">LEFT</button>
+  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
+  <button onclick="move('down'); playMusic()">DOWN</button>
 </div>
 
 <script>
@@ -37,7 +37,6 @@ function startGame() {
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myMusic = new sound("canvasgamemusic.mp3.mp3");
-    myMusic.play();
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -45,19 +44,24 @@ function startGame() {
         switch(e.key) {
             case 'ArrowUp':
                 moveDirection = 'up';
+                playMusic();
                 break;
             case 'ArrowLeft':
                 moveDirection = 'left';
+                playMusic();
                 break;
             case 'ArrowRight':
                 moveDirection = 'right';
+                playMusic();
                 break;
             case 'ArrowDown':
                 moveDirection = 'down';
+                playMusic();
                 break;
             case 'q':
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
+                playMusic();
                 break;
         }
     });
@@ -226,8 +230,15 @@ function sound(src) {
     }    
 }
 
+function playMusic() {
+    if (myMusic) {
+        myMusic.play();
+    }
+}
+
 </script>
 
 <p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
+
