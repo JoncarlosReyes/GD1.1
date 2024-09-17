@@ -21,10 +21,10 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up')">UP</button><br><br>
-  <button onclick="move('left')">LEFT</button>
-  <button onclick="move('right')">RIGHT</button><br><br>
-  <button onclick="move('down')">DOWN</button><br><br>
+  <button onclick="move('up'); playMusic()">UP</button><br><br>
+  <button onclick="move('left'); playMusic()">LEFT</button>
+  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
+  <button onclick="move('down'); playMusic()">DOWN</button><br><br>
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
   <button onclick="resetGame()">RESET</button>
@@ -40,7 +40,6 @@ var myScore;
 var moveDirection = '';
 var isAccelerating = false;
 var myMusic;
-var mySpeedSound;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
@@ -54,7 +53,6 @@ function startGame() {
     myGamePiece.gravity = 0.05;
     myScore = 0;
     myMusic = new sound("canvasgamemusic.mp3");
-    mySpeedSound = new sound("speedboost.mp3"); // Sound effect for speed boost
     myGameArea.start();
     playMusic(); // Start playing music on game start
 
@@ -118,6 +116,7 @@ var myGameArea = {
         if (gamePaused) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
+            playMusic(); // Resume music when game is resumed
         }
     }
 }
@@ -246,7 +245,6 @@ function accelerate(n) {
 function boostSpeed() {
     if (!speedBoostActive) {
         speedBoostActive = true;
-        mySpeedSound.play(); // Play speed boost sound
         var originalSpeed = speed;
         speed *= tempSpeed; // Temporarily increase speed
 
@@ -282,6 +280,7 @@ function handleMovement() {
 function playMusic() {
     if (!myMusic.isPlaying) {
         myMusic.play();
+        myMusic.isPlaying = true;
     }
 }
 
@@ -290,7 +289,10 @@ function pauseGame() {
 }
 
 function resumeGame() {
-    myGameArea.resume();
+    if (gamePaused) {
+        myGameArea.resume();
+        playMusic(); // Resume music when game is resumed
+    }
 }
 
 function resetGame() {
@@ -301,26 +303,28 @@ function resetGame() {
     speed = 1; // Reset speed
     document.getElementById('score').innerText = "SCORE: 0";
     myGameArea.frameNo = 0;
-    myMusic.stop(); // Ensure the music is stopped before restarting
-    playMusic(); // Resume music
+    myGameArea.resume(); // Restart the game
+    playMusic(); // Restart background music
 }
 
+// Sound object constructor
 function sound(src) {
-    this.audio = new Audio(src); // Using Audio directly for simplicity
-    this.audio.preload = "auto";
-    this.audio.loop = true; // Loop the music if needed
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
     this.isPlaying = false;
-
+    
     this.play = function() {
-        if (!this.isPlaying) {
-            this.audio.play().catch(e => console.error("Playback error:", e));
-            this.isPlaying = true;
-        }
+        this.sound.play();
+        this.isPlaying = true;
     }
-
+    
     this.stop = function() {
-        this.audio.pause();
-        this.audio.currentTime = 0;
+        this.sound.pause();
+        this.sound.currentTime = 0;
         this.isPlaying = false;
     }
 }
