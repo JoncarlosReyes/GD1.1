@@ -19,7 +19,7 @@ button {
 </head>
 <body onload="startGame()">
 
-<!-- Control Buttons (Directional buttons removed) -->
+<!-- Control Buttons -->
 <div style="text-align:center;width:480px;">
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
@@ -68,7 +68,7 @@ function startGame() {
                 break;
             case 'q':
                 isAccelerating = true;
-                accelerate(-0.2); // Start accelerating
+                accelerate(-0.02); // Start accelerating
                 playMusic();
                 break;
         }
@@ -77,7 +77,7 @@ function startGame() {
     window.addEventListener('keyup', function(e) {
         if (e.key === 'q') {
             isAccelerating = false;
-            accelerate(0.05); // Stop accelerating
+            accelerate(0.01); // Stop accelerating gradually
         }
         moveDirection = ''; // Clear movement direction when key is released
     });
@@ -149,6 +149,8 @@ function component(width, height, color, x, y, type) {
 
     this.newPos = function() {
         this.gravitySpeed += this.gravity;
+        this.gravitySpeed = Math.min(this.gravitySpeed, 5); // Limit downward speed
+        this.gravitySpeed = Math.max(this.gravitySpeed, -2); // Limit upward speed
         this.x += this.speedX;
         this.y += this.speedY + this.gravitySpeed;
         this.hitBottom();
@@ -231,7 +233,7 @@ function everyinterval(n) {
 }
 
 function accelerate(n) {
-    myGamePiece.gravity = n;
+    myGamePiece.gravity = Math.min(Math.max(myGamePiece.gravity + n, -0.1), 0.2); // Cap gravity between -0.1 and 0.2
 }
 
 // Handle directional movement based on arrow keys (buttons removed)
@@ -268,13 +270,13 @@ function resetGame() {
     myGameArea.stop();
     myObstacles = [];
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
-    myGamePiece.gravity = 0.05; // Reset gravity
-    myScore = 0;
-    speed = 1; // Reset speed to base value
-    document.getElementById('score').innerText = "SCORE: 0";
-    myGameArea.resume();
+    myGamePiece.gravity = 0.05;
+    speed = 1;
+    myGameArea.frameNo = 0;
+    startGame();
 }
 
+// Sound function for background music
 function sound(src) {
     this.sound = document.createElement("audio");
     this.sound.src = src;
@@ -282,12 +284,13 @@ function sound(src) {
     this.sound.setAttribute("controls", "none");
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
-    this.play = function() {
+    this.play = function(){
         this.sound.play();
     }
-    this.stop = function() {
+    this.stop = function(){
         this.sound.pause();
-    }
+        this.sound.currentTime = 0;
+    }    
 }
 
 </script>
