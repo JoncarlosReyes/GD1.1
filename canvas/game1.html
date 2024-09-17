@@ -21,10 +21,10 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up'); playMusic()">UP</button><br><br>
-  <button onclick="move('left'); playMusic()">LEFT</button>
-  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
-  <button onclick="move('down'); playMusic()">DOWN</button><br><br>
+  <button onclick="move('up')">UP</button><br><br>
+  <button onclick="move('left')">LEFT</button>
+  <button onclick="move('right')">RIGHT</button><br><br>
+  <button onclick="move('down')">DOWN</button><br><br>
   <button onclick="pauseGame()">PAUSE</button>
   <button onclick="resumeGame()">RESUME</button>
   <button onclick="resetGame()">RESET</button>
@@ -81,7 +81,6 @@ function startGame() {
                 boostSpeed(); // Speed up the game piece temporarily
                 break;
         }
-        playMusic(); // Call playMusic only once per key press
     });
 
     window.addEventListener('keyup', function(e) {
