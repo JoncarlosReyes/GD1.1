@@ -5,6 +5,7 @@
 <style>
 canvas {
     border: 1px solid #d3d3d3;
+    background-color: #001580;
 }
 button {
     font-size: 18px;
@@ -25,7 +26,6 @@ button {
 <script>
 
 var myGamePiece;
-var myBackground;
 var myObstacles = [];
 var myScore;
 var moveDirection = '';
@@ -36,11 +36,7 @@ function startGame() {
     myGamePiece = new component(30, 30, "green", 10, 120);
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
-
-    // Adding background that will scroll
-    myBackground = new component(480, 270, "gamebackground.png", 0, 0, "background");
     myMusic = new sound("canvasgamemusic.mp3.mp3");
-    
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -96,6 +92,7 @@ var myGameArea = {
 
 function component(width, height, color, x, y, type) {
     this.type = type;
+    this.score = 0;
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -106,13 +103,10 @@ function component(width, height, color, x, y, type) {
     this.gravitySpeed = 0;
     this.update = function() {
         var ctx = myGameArea.context;
-        if (this.type === "text") {
+        if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } else if (this.type === "background") {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-            ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
         } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -122,12 +116,7 @@ function component(width, height, color, x, y, type) {
         this.gravitySpeed += this.gravity;
         this.x += this.speedX;
         this.y += this.speedY + this.gravitySpeed;
-        if (this.type === "background") {
-            // Reset the position of the background when it goes off screen
-            if (this.x <= -this.width) {
-                this.x = 0;
-            }
-        }
+        this.hitBottom();
     }
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
@@ -135,6 +124,21 @@ function component(width, height, color, x, y, type) {
             this.y = rockbottom;
             this.gravitySpeed = 0;
         }
+    }
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
     }
 }
 
@@ -146,10 +150,6 @@ function updateGameArea() {
         } 
     }
     myGameArea.clear();
-    myBackground.speedX = -1; // Speed of background scrolling
-    myBackground.newPos();    
-    myBackground.update(); // Update background position
-
     myGameArea.frameNo += 1;
     if (myGameArea.frameNo == 1 || everyinterval(150)) {
         x = myGameArea.canvas.width;
@@ -239,6 +239,5 @@ function playMusic() {
 </script>
 
 <p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
-
 </body>
 </html>
