@@ -40,17 +40,21 @@ var myScore;
 var moveDirection = '';
 var isAccelerating = false;
 var myMusic;
+var mySpeedSound;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
-var speedUpSound; // Sound effect for speed up
+var tempSpeed = 2; // Speed multiplier for temporary speed boost
+var boostDuration = 2000; // Duration of speed boost in milliseconds
+var speedBoostActive = false; // Flag to track if speed boost is active
+var boostTimeout; // Variable to store the timeout for the speed boost
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = 0;
-    myMusic = new sound("canvasgamemusic.mp3.mp3");
-    speedUpSound = new sound("speedup.mp3"); // Add your speed up sound effect file
+    myMusic = new sound("canvasgamemusic.mp3");
+    mySpeedSound = new sound("speedup.mp3"); // Sound effect for speed boost
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -78,7 +82,7 @@ function startGame() {
                 playMusic();
                 break;
             case 'k':
-                increaseSpeed(); // Increase speed and play sound effect
+                boostSpeed(); // Speed up the game piece temporarily
                 break;
         }
     });
@@ -140,7 +144,7 @@ function component(width, height, color, x, y, type) {
             this.update();
         };
         this.image.onerror = () => {
-            console.error(`Failed to load image: ${color}`); 
+            console.error(`Failed to load image: ${color}`);
         };
     }
     
@@ -246,9 +250,19 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-function increaseSpeed() {
-    speed += 1; // Increase speed by 1 each time 'K' is pressed
-    speedUpSound.play(); // Play the speed up sound effect
+function boostSpeed() {
+    if (!speedBoostActive) {
+        speedBoostActive = true;
+        mySpeedSound.play(); // Play speed boost sound
+        var originalSpeed = speed;
+        speed *= tempSpeed; // Temporarily increase speed
+
+        // Reset speed after boost duration
+        boostTimeout = setTimeout(function() {
+            speed /= tempSpeed;
+            speedBoostActive = false;
+        }, boostDuration);
+    }
 }
 
 // Handle directional movement based on both buttons and arrow keys
@@ -266,14 +280,29 @@ function move(direction) {
         case 'down':
             myGamePiece.speedY = 1;
             break;
-        default:
-            myGamePiece.speedX = 0;
-            myGamePiece.speedY = 0;
+    }
+}
+
+function handleMovement() {
+    if (moveDirection === 'up') {
+        myGamePiece.speedY = -1;
+    } else if (moveDirection === 'down') {
+        myGamePiece.speedY = 1;
+    } else {
+        myGamePiece.speedY = 0;
+    }
+
+    if (moveDirection === 'left') {
+        myGamePiece.speedX = -1;
+    } else if (moveDirection === 'right') {
+        myGamePiece.speedX = 1;
+    } else {
+        myGamePiece.speedX = 0;
     }
 }
 
 function playMusic() {
-    if (myMusic) {
+    if (!myMusic.isPlaying()) {
         myMusic.play();
     }
 }
@@ -289,10 +318,10 @@ function resumeGame() {
 function resetGame() {
     myGameArea.stop();
     myObstacles = [];
-    myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myScore = 0;
-    speed = 1; // Reset speed to base value
-    document.getElementById('score').innerText = "SCORE: 0";
+    speed = 1; // Reset speed
+    myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
+    myGamePiece.gravity = 0.05;
     myGameArea.resume();
 }
 
@@ -308,10 +337,12 @@ function sound(src) {
     }
     this.stop = function() {
         this.sound.pause();
+        this.sound.currentTime = 0;
+    }
+    this.isPlaying = function() {
+        return !this.sound.paused;
     }
 }
-
 </script>
-
 </body>
 </html>
