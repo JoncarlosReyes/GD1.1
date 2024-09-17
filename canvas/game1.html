@@ -5,7 +5,6 @@
 <style>
 canvas {
     border: 1px solid #d3d3d3;
-    /* Removed the navy blue background color */
 }
 button {
     font-size: 18px;
@@ -38,13 +37,13 @@ function startGame() {
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
 
-    // Adding background that will scroll
+    // Background component
     myBackground = new component(480, 270, "gamebackground.png", 0, 0, "background");
-    myMusic = new sound("canvasgamemusic.mp3.mp3");
+    myMusic = new sound("canvasgamemusic.mp3");
     
     myGameArea.start();
 
-    // Add event listeners for keyboard input
+    // Event listeners for keyboard input
     window.addEventListener('keydown', function(e) {
         switch(e.key) {
             case 'ArrowUp':
@@ -88,7 +87,7 @@ var myGameArea = {
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
-        this.interval = setInterval(updateGameArea, 20);
+        this.interval = setInterval(updateGameArea, 20); // Update every 20ms (50 FPS)
     },
     clear: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -106,7 +105,7 @@ function component(width, height, color, x, y, type) {
     this.gravity = 0;
     this.gravitySpeed = 0;
     
-    // Load image for background, otherwise draw color rectangle
+    // Load image for background
     if (type === "background") {
         this.image = new Image();
         this.image.src = color;
@@ -121,7 +120,7 @@ function component(width, height, color, x, y, type) {
         } else if (this.type === "background") {
             // Draw the background image
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-            ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+            ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height); // Loop the background
         } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -132,11 +131,12 @@ function component(width, height, color, x, y, type) {
         this.x += this.speedX;
         this.y += this.speedY + this.gravitySpeed;
         if (this.type === "background") {
-            // Reset the position of the background when it goes off screen
+            // Reset the background position to create a seamless scrolling effect
             if (this.x <= -this.width) {
                 this.x = 0;
             }
         }
+        this.hitBottom();
     }
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
@@ -149,17 +149,22 @@ function component(width, height, color, x, y, type) {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
-            return;
-        } 
+            return; // Stop the game if the piece crashes with an obstacle
+        }
     }
-    myGameArea.clear();
-    myBackground.speedX = -1; // Speed of background scrolling
+
+    myGameArea.clear(); // Clear previous frame
+
+    // Update background
+    myBackground.speedX = -1; // Background scrolling speed
     myBackground.newPos();    
     myBackground.update(); // Update background position
 
     myGameArea.frameNo += 1;
+
     if (myGameArea.frameNo == 1 || everyinterval(150)) {
         x = myGameArea.canvas.width;
         minHeight = 20;
@@ -168,23 +173,25 @@ function updateGameArea() {
         minGap = 50;
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new component(10, height, "green", x, 0));
-        myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
+        myObstacles.push(new component(10, height, "green", x, 0)); // Top obstacle
+        myObstacles.push(new component(10, x - height - gap, "green", x, height + gap)); // Bottom obstacle
     }
+
     for (var i = 0; i < myObstacles.length; i += 1) {
-        myObstacles[i].x -= 1;
+        myObstacles[i].x -= 1; // Move obstacles to the left
         myObstacles[i].update();
     }
+
     myScore.text = "SCORE: " + myGameArea.frameNo;
     myScore.update();
-    myGamePiece.newPos();
-    myGamePiece.update();
+
+    myGamePiece.newPos(); // Update the position of the game piece
+    myGamePiece.update(); // Draw the game piece
     handleMovement(); // Handle movement based on direction
 }
 
 function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
-    return false;
+    return (myGameArea.frameNo / n) % 1 == 0;
 }
 
 function accelerate(n) {
