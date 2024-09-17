@@ -42,7 +42,7 @@ var isAccelerating = false;
 var myMusic;
 var gamePaused = false;
 var gameInterval;
-var gameSpeed = 1;
+var speed = 1; // Base speed for obstacle movement
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
@@ -107,17 +107,13 @@ var myGameArea = {
     stop: function() {
         clearInterval(gameInterval);
         gamePaused = true;
-        if (myMusic) {
-            myMusic.stop();
-        }
+        myMusic.stop(); // Stop music when game is paused
     },
     resume: function() {
         if (gamePaused) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
-            if (myMusic) {
-                myMusic.play();
-            }
+            playMusic(); // Resume music when game is resumed
         }
     }
 }
@@ -154,6 +150,9 @@ function component(width, height, color, x, y, type) {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
+        // No longer drawing hitbox
+        // ctx.strokeStyle = 'red';
+        // ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
     this.newPos = function() {
@@ -197,42 +196,38 @@ function updateGameArea() {
     for (var i = 0; i < myObstacles.length; i += 1) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             // Handle collision
+            console.log("Collision detected with obstacle!");
             resetGame(); // Reset the game on collision
             return;
         } 
     }
     
     myGameArea.frameNo += 1;
-    
-    // Increase obstacle frequency and speed based on score
-    if (myGameArea.frameNo % (150 / gameSpeed) === 0) {
+    if (myGameArea.frameNo == 1 || everyinterval(100)) { // Increase frequency of obstacles
         x = myGameArea.canvas.width;
         minHeight = 20;
         maxHeight = 200;
-        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
         minGap = 50;
         maxGap = 200;
-        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        if (Math.random() < 0.5) {
-            // Increase obstacles at the bottom more often
-            myObstacles.push(new component(10, height, "treetrunk.png", x, 0, "image"));
-        }
-        myObstacles.push(new component(10, x - height - gap, "treetrunk.png", x, height + gap, "image"));
+        gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+        // Adjust obstacle length for bottom obstacles
+        var bottomObstacleHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight + 20); // Add 20 pixels
+        myObstacles.push(new component(10, height, "treetrunk.png", x, 0, "image"));
+        myObstacles.push(new component(10, bottomObstacleHeight, "treetrunk.png", x, height + gap, "image"));
+    }
+    for (var i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].x -= speed; // Use dynamic speed
+        myObstacles[i].update();
     }
     
-    for (var i = 0; i < myObstacles.length; i += 1) {
-        myObstacles[i].x -= gameSpeed;
-        myObstacles[i].update();
+    // Increase speed every 1500 points
+    if (myGameArea.frameNo % 1500 === 0 && myGameArea.frameNo !== 0) {
+        speed += 0.5;
     }
     
     myScore = myGameArea.frameNo;
     document.getElementById('score').innerText = "SCORE: " + myScore;
-    
-    // Increase speed every 1500 points
-    if (myScore > 0 && myScore % 1500 === 0) {
-        gameSpeed += 0.5;
-    }
-    
     myGamePiece.newPos();
     myGamePiece.update();
     handleMovement(); // Handle movement based on direction
@@ -275,8 +270,32 @@ function handleMovement() {
     } else if (moveDirection === 'down') {
         myGamePiece.speedY = 1;
     } else {
+        // Stop movement if no direction key is pressed
         myGamePiece.speedX = 0;
         myGamePiece.speedY = 0;
+    }
+}
+
+function resetGame() {
+    myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
+    myObstacles = [];
+    myScore = 0;
+    speed = 1; // Reset speed to initial value
+    myGameArea.frameNo = 0;
+    myGameArea.resume(); // Restart the game
+}
+
+function pauseGame() {
+    myGameArea.stop(); // Pause the game
+}
+
+function resumeGame() {
+    myGameArea.resume(); // Resume the game
+}
+
+function playMusic() {
+    if (myMusic) {
+        myMusic.play();
     }
 }
 
@@ -287,47 +306,16 @@ function sound(src) {
     this.sound.setAttribute("controls", "none");
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
-    this.play = function(){
+    this.play = function() {
         this.sound.play();
     }
-    this.stop = function(){
+    this.stop = function() {
         this.sound.pause();
-        this.sound.currentTime = 0; // Reset music
-    }    
-}
-
-function playMusic() {
-    if (myMusic) {
-        myMusic.play();
-    }
-}
-
-function pauseGame() {
-    myGameArea.stop();
-}
-
-function resumeGame() {
-    myGameArea.resume();
-}
-
-function resetGame() {
-    myGameArea.stop();
-    myObstacles = [];
-    myScore = 0;
-    document.getElementById('score').innerText = "SCORE: 0";
-    myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
-    myGamePiece.gravity = 0.05;
-    gameSpeed = 1;
-    myGameArea.frameNo = 0;
-    myGameArea.resume();
-    if (myMusic) {
-        myMusic.stop();
-        myMusic.play();
+        this.sound.currentTime = 0;
     }
 }
 
 </script>
 
-<p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
