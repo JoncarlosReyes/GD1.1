@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,7 +6,7 @@
 <style>
 canvas {
     border: 1px solid #d3d3d3;
-    background-color: #001580; /* This will be overridden by the background image */
+    background-color: #001580;
 }
 button {
     font-size: 18px;
@@ -17,15 +18,16 @@ button {
 
 <!-- Game Control Buttons -->
 <div style="text-align:center;width:480px;">
-  <button onclick="move('up')">UP</button><br><br>
-  <button onclick="move('left')">LEFT</button>
-  <button onclick="move('right')">RIGHT</button><br><br>
-  <button onclick="move('down')">DOWN</button>
+  <button onclick="move('up'); playMusic()">UP</button><br><br>
+  <button onclick="move('left'); playMusic()">LEFT</button>
+  <button onclick="move('right'); playMusic()">RIGHT</button><br><br>
+  <button onclick="move('down'); playMusic()">DOWN</button>
 </div>
 
 <script>
 
 var myGamePiece;
+var myObstacles = [];
 var myScore;
 var moveDirection = '';
 var isAccelerating = false;
@@ -33,9 +35,9 @@ var myMusic;
 
 function startGame() {
     myGamePiece = new component(30, 30, "green", 10, 120);
+    myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
-    myMusic = new sound("canvasgamemusic.mp3"); // Ensure your audio file is correctly named
-    myMusic.play();
+    myMusic = new sound("canvasgamemusic.mp3.mp3");
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -43,19 +45,24 @@ function startGame() {
         switch(e.key) {
             case 'ArrowUp':
                 moveDirection = 'up';
+                playMusic();
                 break;
             case 'ArrowLeft':
                 moveDirection = 'left';
+                playMusic();
                 break;
             case 'ArrowRight':
                 moveDirection = 'right';
+                playMusic();
                 break;
             case 'ArrowDown':
                 moveDirection = 'down';
+                playMusic();
                 break;
             case 'q':
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
+                playMusic();
                 break;
         }
     });
@@ -86,6 +93,7 @@ var myGameArea = {
 
 function component(width, height, color, x, y, type) {
     this.type = type;
+    this.score = 0;
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -94,33 +102,23 @@ function component(width, height, color, x, y, type) {
     this.y = y;
     this.gravity = 0;
     this.gravitySpeed = 0;
-    
-    if (type == "image") {
-        this.image = new Image();
-        this.image.src = color;
-    }
-
     this.update = function() {
         var ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } else if (this.type == "image") {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
     }
-
     this.newPos = function() {
         this.gravitySpeed += this.gravity;
         this.x += this.speedX;
         this.y += this.speedY + this.gravitySpeed;
         this.hitBottom();
     }
-
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
@@ -128,36 +126,64 @@ function component(width, height, color, x, y, type) {
             this.gravitySpeed = 0;
         }
     }
-
     this.crashWith = function(otherobj) {
         var myleft = this.x;
-        var myright = this.x + this.width;
+        var myright = this.x + (this.width);
         var mytop = this.y;
-        var mybottom = this.y + this.height;
+        var mybottom = this.y + (this.height);
         var otherleft = otherobj.x;
-        var otherright = otherobj.x + otherobj.width;
+        var otherright = otherobj.x + (otherobj.width);
         var othertop = otherobj.y;
-        var otherbottom = otherobj.y + otherobj.height;
-        return !(mybottom < othertop || mytop > otherbottom || myright < otherleft || myleft > otherright);
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
     }
 }
 
 function updateGameArea() {
-    myGameArea.clear();
-    if (!myBackground) {
-        // Create static background if not already created
-        myBackground = new component(480, 270, "gamebackground.png", 0, 0, "image");
-        myBackground.update();
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    for (var i = 0; i < myObstacles.length; i += 1) {
+        if (myGamePiece.crashWith(myObstacles[i])) {
+            return;
+        } 
     }
+    myGameArea.clear();
+    myGameArea.frameNo += 1;
+    if (myGameArea.frameNo == 1 || everyinterval(150)) {
+        x = myGameArea.canvas.width;
+        minHeight = 20;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 50;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        myObstacles.push(new component(10, height, "green", x, 0));
+        myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
+    }
+    for (var i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].x -= 1;
+        myObstacles[i].update();
+    }
+    myScore.text = "SCORE: " + myGameArea.frameNo;
+    myScore.update();
     myGamePiece.newPos();
     myGamePiece.update();
     handleMovement(); // Handle movement based on direction
+}
+
+function everyinterval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
+    return false;
 }
 
 function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
+// Handle directional movement based on both buttons and arrow keys
 function move(direction) {
     switch(direction) {
         case 'up':
@@ -203,6 +229,12 @@ function sound(src) {
     this.stop = function(){
         this.sound.pause();
     }    
+}
+
+function playMusic() {
+    if (myMusic) {
+        myMusic.play();
+    }
 }
 
 </script>
