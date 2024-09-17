@@ -63,29 +63,25 @@ function startGame() {
         switch(e.key) {
             case 'ArrowUp':
                 moveDirection = 'up';
-                playMusic();
                 break;
             case 'ArrowLeft':
                 moveDirection = 'left';
-                playMusic();
                 break;
             case 'ArrowRight':
                 moveDirection = 'right';
-                playMusic();
                 break;
             case 'ArrowDown':
                 moveDirection = 'down';
-                playMusic();
                 break;
             case 'q':
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
-                playMusic();
                 break;
             case 'k':
                 boostSpeed(); // Speed up the game piece temporarily
                 break;
         }
+        playMusic(); // Call playMusic only once per key press
     });
 
     window.addEventListener('keyup', function(e) {
@@ -159,9 +155,6 @@ function component(width, height, color, x, y, type) {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-        // No longer drawing hitbox
-        // ctx.strokeStyle = 'red';
-        // ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
     this.newPos = function() {
@@ -290,7 +283,6 @@ function handleMovement() {
 function playMusic() {
     if (!myMusic.isPlaying) {
         myMusic.play();
-        myMusic.isPlaying = true;
     }
 }
 
@@ -310,24 +302,28 @@ function resetGame() {
     speed = 1; // Reset speed
     document.getElementById('score').innerText = "SCORE: 0";
     myGameArea.frameNo = 0;
+    myMusic.stop(); // Ensure the music is stopped before restarting
     playMusic(); // Resume music
 }
 
 function sound(src) {
-    this.sound = document.createElement("audio");
-    this.sound.src = src;
-    this.sound.setAttribute("preload", "auto");
-    this.sound.setAttribute("controls", "none");
-    this.sound.style.display = "none";
-    document.body.appendChild(this.sound);
+    this.audio = new Audio(src); // Using Audio directly for simplicity
+    this.audio.preload = "auto";
+    this.audio.loop = true; // Loop the music if needed
+    this.isPlaying = false;
+
     this.play = function() {
-        this.sound.play();
+        if (!this.isPlaying) {
+            this.audio.play().catch(e => console.error("Playback error:", e));
+            this.isPlaying = true;
+        }
     }
+
     this.stop = function() {
-        this.sound.pause();
-        this.sound.currentTime = 0;
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.isPlaying = false;
     }
-    this.isPlaying = false; // To track if the sound is currently playing
 }
 
 </script>
