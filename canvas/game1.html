@@ -39,7 +39,7 @@ function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
-    myMusic = new sound("canvasgamemusic.mp3");
+    myMusic = new sound("canvasgamemusic.mp3"); // Ensure this file exists
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -194,8 +194,8 @@ function updateGameArea() {
         minGap = 50;
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new component(10, height, "treetrunk.png", x, 0, "image"));
-        myObstacles.push(new component(10, x - height - gap, "treetrunk.png", x, height + gap, "image"));
+        myObstacles.push(new component(10, height, "rocks2.png", x, 0, "image"));
+        myObstacles.push(new component(10, x - height - gap, "rocks2.png", x, height + gap, "image"));
     }
     for (var i = 0; i < myObstacles.length; i += 1) {
         myObstacles[i].x -= 1;
@@ -251,8 +251,7 @@ function handleMovement() {
 }
 
 function sound(src) {
-    this.sound = document.createElement("audio");
-    this.sound.src = src;
+    this.sound = new Audio(src); // Use Audio object for better compatibility
     this.sound.setAttribute("preload", "auto");
     this.sound.setAttribute("controls", "none");
     this.sound.style.display = "none";
@@ -262,11 +261,12 @@ function sound(src) {
     }
     this.stop = function(){
         this.sound.pause();
+        this.sound.currentTime = 0; // Reset playback position
     }    
 }
 
 function playMusic() {
-    if (myMusic) {
+    if (myMusic && !isPaused) {
         myMusic.play();
     }
 }
@@ -296,5 +296,7 @@ function resetGame() {
 }
 
 </script>
+
+<p>Press Q to ACCELERATE. Use arrow keys or buttons to move.</p>
 </body>
 </html>
