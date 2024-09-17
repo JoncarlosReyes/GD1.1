@@ -43,14 +43,12 @@ var myMusic;
 var gamePaused = false;
 var gameInterval;
 var speed = 1; // Base speed for obstacle movement
-var boostDuration = 2000; // Duration of speed boost in milliseconds
-var boostTimeout; // Variable to store the timeout for the speed boost
 
 function startGame() {
     myGamePiece = new component(30, 30, "penguin.png", 10, 120, "image");
     myGamePiece.gravity = 0.05;
     myScore = 0;
-    myMusic = new sound("canvasgamemusic.mp3");
+    myMusic = new sound("canvasgamemusic.mp3.mp3");
     myGameArea.start();
 
     // Add event listeners for keyboard input
@@ -76,9 +74,6 @@ function startGame() {
                 isAccelerating = true;
                 accelerate(-0.2); // Start accelerating
                 playMusic();
-                break;
-            case 'w':
-                boostSpeed(); // Speed up the game piece temporarily
                 break;
         }
     });
@@ -118,7 +113,6 @@ var myGameArea = {
         if (gamePaused) {
             gameInterval = setInterval(updateGameArea, 20);
             gamePaused = false;
-            playMusic(); // Resume music when game is resumed
         }
     }
 }
@@ -155,6 +149,9 @@ function component(width, height, color, x, y, type) {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
+        // No longer drawing hitbox
+        // ctx.strokeStyle = 'red';
+        // ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
     this.newPos = function() {
@@ -244,16 +241,6 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-function boostSpeed() {
-    var originalSpeed = speed;
-    speed *= 2; // Temporarily increase speed
-
-    // Reset speed after boost duration
-    boostTimeout = setTimeout(function() {
-        speed = originalSpeed;
-    }, boostDuration);
-}
-
 // Handle directional movement based on both buttons and arrow keys
 function move(direction) {
     switch(direction) {
@@ -309,7 +296,6 @@ function resetGame() {
     speed = 1; // Reset speed to base value
     document.getElementById('score').innerText = "SCORE: 0";
     myGameArea.resume();
-    playMusic(); // Restart background music
 }
 
 function sound(src) {
