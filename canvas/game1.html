@@ -113,6 +113,9 @@ function component(width, height, color, x, y, type) {
         this.image.onload = () => { // Ensure image is loaded before using
             this.update();
         };
+        this.image.onerror = () => {
+            console.error(`Failed to load image: ${color}`);
+        };
     }
     
     this.update = function() {
@@ -180,8 +183,8 @@ function updateGameArea() {
         minGap = 50;
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new component(10, height, "rock.png", x, 0, "image"));
-        myObstacles.push(new component(10, x - height - gap, "rocks.png", x, height + gap, "image"));
+        myObstacles.push(new component(10, height, "rocks2.png", x, 0, "image"));
+        myObstacles.push(new component(10, x - height - gap, "rocks2.png", x, height + gap, "image"));
     }
     for (var i = 0; i < myObstacles.length; i += 1) {
         myObstacles[i].x -= 1;
