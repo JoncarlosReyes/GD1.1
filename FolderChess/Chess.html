@@ -13,7 +13,6 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react,stage-3">
-    // Model: Starting state of the chessboard in 2D array
     const initialGameState = [
       ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
       ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -25,7 +24,6 @@
       ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
     ];
 
-    // Mapping of chess pieces to their respective image URLs
     const pieceImages = {
       'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
       'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
@@ -41,7 +39,6 @@
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
-    // Speech Synthesis function
     function speakMessage(message) {
       const speech = new SpeechSynthesisUtterance(message);
       speech.pitch = 1;
@@ -55,8 +52,8 @@
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [currentPlayer, setCurrentPlayer] = React.useState('white');
       const [gameOver, setGameOver] = React.useState(false);
+      const [winner, setWinner] = React.useState(null); // New state for winner
 
-      // Handle square click for moving pieces
       function handleClick(row, col) {
         if (gameOver) return;
 
@@ -64,26 +61,25 @@
           const newGame = game.map(row => row.slice());
           const [selectedRow, selectedCol] = selectedSquare;
 
-          // Only allow move if it's the current player's piece
           if ((currentPlayer === 'white' && /^[A-Z]$/.test(newGame[selectedRow][selectedCol])) ||
               (currentPlayer === 'black' && /^[a-z]$/.test(newGame[selectedRow][selectedCol]))) {
 
-            // Move the piece to the new location
             if (newGame[row][col] === 'k' || newGame[row][col] === 'K') {
               setGameOver(true);
-              speakMessage(`Game over! ${currentPlayer === 'white' ? 'White' : 'Black'} wins!`);
+              const winningPlayer = currentPlayer === 'white' ? 'White' : 'Black';
+              setWinner(winningPlayer); // Set the winner
+              speakMessage(`Game over! ${winningPlayer} wins!`);
             } else {
               newGame[row][col] = newGame[selectedRow][selectedCol];
               newGame[selectedRow][selectedCol] = '';
               setGame(newGame);
               setSelectedSquare(null);
 
-              // Announce the move and switch players
               speakMessage(`${currentPlayer} moved. Now it's ${currentPlayer === 'white' ? 'black' : 'white'}'s turn.`);
               setCurrentPlayer(currentPlayer === 'white' ? 'black' : 'white');
             }
           } else {
-            setSelectedSquare(null); // Deselect invalid selection
+            setSelectedSquare(null);
           }
         } else {
           if (game[row][col]) {
@@ -92,23 +88,24 @@
         }
       }
 
+      function resetGame() {
+        setGame(initialGameState);
+        setCurrentPlayer('white');
+        setGameOver(false);
+        setWinner(null); // Reset winner
+        speakMessage("Game restarted. White's turn.");
+      }
+
       return (
         <div>
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
           <button onClick={resetGame} style={{ margin: '20px', padding: '10px' }}>Restart Game</button>
+
+          {winner && <h2>{winner} wins the game!</h2>} {/* Display the winner */}
         </div>
       );
     }
 
-    // Reset the game
-    function resetGame() {
-      setGame(initialGameState);
-      setCurrentPlayer('white');
-      setGameOver(false);
-      speakMessage("Game restarted. White's turn.");
-    }
-
-    // View: Board and buttons reflecting the game state
     function Board({ game, onSquareClick, selectedSquare }) {
       return (
         <div>
@@ -137,11 +134,10 @@
         justifyContent: 'center',
         alignItems: 'center',
         cursor: 'pointer',
-        backgroundColor: isSelected ? '#ffeb3b' : (isLight ? '#ff6347' : '#1e90ff'), // Red and blue colors
+        backgroundColor: isSelected ? '#ffeb3b' : (isLight ? '#ff6347' : '#1e90ff'),
         border: '1px solid #999'
       };
 
-      // Display the piece image or an empty square
       const pieceDisplay = () => {
         if (value) {
           return <img src={pieceImages[value]} alt={value} style={{ width: '70px', height: '70px' }} />;
@@ -155,15 +151,6 @@
         </button>
       );
     }
-
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<Game />);
-  </script>
-</body>
-</html>
-
-
-
 
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<Game />);
