@@ -39,20 +39,23 @@
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
-    function speakMessage(message) {
-      const speech = new SpeechSynthesisUtterance(message);
-      speech.pitch = 1;
-      speech.rate = 1;
-      speech.volume = 1;
-      window.speechSynthesis.speak(speech);
-    }
-
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [currentPlayer, setCurrentPlayer] = React.useState('white');
       const [gameOver, setGameOver] = React.useState(false);
-      const [winner, setWinner] = React.useState(null); // New state for winner
+      const [winner, setWinner] = React.useState(null);
+      const [isSpeechEnabled, setIsSpeechEnabled] = React.useState(true); // New state for toggling speech
+
+      function speakMessage(message) {
+        if (isSpeechEnabled) {
+          const speech = new SpeechSynthesisUtterance(message);
+          speech.pitch = 1;
+          speech.rate = 1;
+          speech.volume = 1;
+          window.speechSynthesis.speak(speech);
+        }
+      }
 
       function handleClick(row, col) {
         if (gameOver) return;
@@ -67,7 +70,7 @@
             if (newGame[row][col] === 'k' || newGame[row][col] === 'K') {
               setGameOver(true);
               const winningPlayer = currentPlayer === 'white' ? 'White' : 'Black';
-              setWinner(winningPlayer); // Set the winner
+              setWinner(winningPlayer);
               speakMessage(`Game over! ${winningPlayer} wins!`);
             } else {
               newGame[row][col] = newGame[selectedRow][selectedCol];
@@ -92,16 +95,23 @@
         setGame(initialGameState);
         setCurrentPlayer('white');
         setGameOver(false);
-        setWinner(null); // Reset winner
+        setWinner(null);
         speakMessage("Game restarted. White's turn.");
+      }
+
+      function toggleSpeech() {
+        setIsSpeechEnabled(prev => !prev);
+        speakMessage(isSpeechEnabled ? "Speech disabled." : "Speech enabled.");
       }
 
       return (
         <div>
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
           <button onClick={resetGame} style={{ margin: '20px', padding: '10px' }}>Restart Game</button>
-
-          {winner && <h2>{winner} wins the game!</h2>} {/* Display the winner */}
+          <button onClick={toggleSpeech} style={{ margin: '20px', padding: '10px' }}>
+            {isSpeechEnabled ? 'Disable Speech' : 'Enable Speech'}
+          </button>
+          {winner && <h2>{winner} wins the game!</h2>}
         </div>
       );
     }
@@ -157,3 +167,4 @@
   </script>
 </body>
 </html>
+
