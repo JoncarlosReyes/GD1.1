@@ -1,1 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Shooter Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.0.0/dist/fabric.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Initialize the Fabric.js canvas
+        const canvas = new fabric.Canvas('canvas');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+
+        // Player setup
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
+            fill: 'blue',
+            width: 50,
+            height: 20,
+            selectable: false
+        });
+        canvas.add(player);
+
+        // Score setup
+        let score = 0;
+        const scoreText = new fabric.Text(`Score: ${score}`, {
+            left: 10,
+            top: 10,
+            fontSize: 20,
+            fill: 'white',
+            selectable: false
+        });
+        canvas.add(scoreText);
+
+        // Update score function
+        function updateScore(points) {
+            score += points;
+            scoreText.text = `Score: ${score}`;
+            canvas.renderAll();
+        }
+
+        // Player movement
+        document.addEventListener('keydown', (event) => {
+            const step = 10;
+            if (event.key === 'ArrowLeft') {
+                player.left = Math.max(0, player.left - step);
+            } else if (event.key === 'ArrowRight') {
+                player.left = Math.min(width - player.width, player.left + step);
+            }
+            canvas.renderAll();
+        });
+
+        // Shoot bullets
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ' ') { // Space key to shoot
+                shootBullet();
+            }
+        });
+
+        function shootBullet() {
+            const bullet = new fabric.Circle({
+                left: player.left + player.width / 2 - 5,
+                top: player.top - 10,
+                fill: 'red',
+                radius: 5,
+                selectable: false
+            });
+            canvas.add(bullet);
+
+            const interval = setInterval(() => {
+                bullet.top -= 5;
+                // Check for bullet collision with obstacles
+                obstacles.forEach((obstacle, index) => {
+                    if (bullet.intersectsWithObject(obstacle)) {
+                        canvas.remove(obstacle);
+                        canvas.remove(bullet);
+                        obstacles.splice(index, 1);
+                        updateScore(5); // Award points for hitting obstacle
+                        clearInterval(interval);
+                    }
+                });
+                if (bullet.top < 0) {
+                    clearInterval(interval);
+                    canvas.remove(bullet);
+                }
+                canvas.renderAll();
+            }, 20);
+        }
+
+        // Obstacle creation
+        const obstacles = [];
+        function createObstacle() {
+            const obstacle = new fabric.Rect({
+                left: Math.random() * (width - 50),
+                top: 0,
+                fill: 'orange',
+                width: 50,
+                height: 20,
+                selectable: false
+            });
+            obstacles.push(obstacle);
+            canvas.add(obstacle);
+
+            const interval = setInterval(() => {
+                obstacle.top += 3;
+                if (obstacle.top > height) {
+                    clearInterval(interval);
+                    canvas.remove(obstacle);
+                    obstacles.splice(obstacles.indexOf(obstacle), 1);
+                    updateScore(1); // Award points for avoiding obstacle
+                }
+                // Check if obstacle hits player
+                if (obstacle.intersectsWithObject(player)) {
+                    alert("Game Over! Your final score: " + score);
+                    window.location.reload(); // Restart game
+                }
+                canvas.renderAll();
+            }, 20);
+        }
+
+        // Create obstacles at intervals
+        setInterval(createObstacle, 2000);
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            canvas.setWidth(newWidth);
+            canvas.setHeight(newHeight);
+            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 50 });
+            scoreText.set({ top: 10 });
+            canvas.renderAll();
+        });
+    </script>
+</body>
+</html>
 
