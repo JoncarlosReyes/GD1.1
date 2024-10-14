@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Shooter Game</title>
-    <script src="https://cdn.jsdelivr.net/npm/konva@8.3.6/konva.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.0.0/dist/fabric.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -17,143 +17,127 @@
     </style>
 </head>
 <body>
-    <div id="container"></div>
+    <canvas id="canvas"></canvas>
     <script>
-        // Initialize Konva stage and layer
+        // Initialize the Fabric.js canvas
+        const canvas = new fabric.Canvas('canvas');
         const width = window.innerWidth;
         const height = window.innerHeight;
-        const stage = new Konva.Stage({
-            container: 'container',
-            width: width,
-            height: height,
-        });
-        const layer = new Konva.Layer();
-        stage.add(layer);
+        canvas.setWidth(width);
+        canvas.setHeight(height);
 
-        // Player setup
-        const player = new Konva.Circle({
-            x: width / 2,
-            y: height - 30,
+        // Create player
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
             fill: 'blue',
-            radius: 15,
-            draggable: true,
+            width: 50,
+            height: 20,
+            selectable: false
         });
-        layer.add(player);
-        layer.draw();
+        canvas.add(player);
 
-        // Score setup
+        // Create score
         let score = 0;
-        const scoreText = new Konva.Text({
-            x: 10,
-            y: 10,
-            text: `Score: ${score}`,
+        const scoreText = new fabric.Text(`Score: ${score}`, {
+            left: 10,
+            top: 10,
             fontSize: 24,
-            fill: 'black', // Changed to black
+            selectable: false
         });
-        layer.add(scoreText);
-        layer.draw();
+        canvas.add(scoreText);
 
         // Player movement
         document.addEventListener('keydown', (event) => {
             const step = 10;
             if (event.key === 'ArrowLeft') {
-                player.x(Math.max(15, player.x() - step)); // Prevent going off-screen
+                player.left = Math.max(0, player.left - step);
             } else if (event.key === 'ArrowRight') {
-                player.x(Math.min(width - 15, player.x() + step)); // Prevent going off-screen
-            } else if (event.key === 'ArrowUp') {
-                player.y(Math.max(15, player.y() - step)); // Move up
-            } else if (event.key === 'ArrowDown') {
-                player.y(Math.min(height - 15, player.y() + step)); // Move down
-            } else if (event.key === ' ') { // Space bar for shooting
+                player.left = Math.min(width - player.width, player.left + step);
+            } else if (event.key === ' ') { // Space key to shoot
                 shootBullet();
             }
-            layer.draw();
+            canvas.renderAll();
         });
 
-        // Function to shoot a bullet
+        // Function to shoot bullets
         function shootBullet() {
-            const bullet = new Konva.Circle({
-                x: player.x(),
-                y: player.y() - 20,
+            const bullet = new fabric.Circle({
+                left: player.left + player.width / 2 - 5,
+                top: player.top - 10,
                 fill: 'red',
                 radius: 5,
+                selectable: false
             });
-            layer.add(bullet);
-            layer.draw();
+            canvas.add(bullet);
 
-            // Create a bullet animation
-            const bulletAnimation = new Konva.Animation(() => {
-                bullet.y(bullet.y() - 5); // Move the bullet up
-                if (bullet.y() < 0) {
-                    bullet.destroy(); // Remove bullet if it goes off-screen
-                    bulletAnimation.stop(); // Stop the animation
+            const bulletInterval = setInterval(() => {
+                bullet.top -= 5;
+                if (bullet.top < 0) {
+                    clearInterval(bulletInterval);
+                    canvas.remove(bullet);
                 } else {
-                    // Check collision with enemies
-                    enemies.forEach((enemy, index) => {
-                        if (bullet.getClientRect().intersects(enemy.getClientRect())) {
-                            bullet.destroy(); // Remove bullet on hit
-                            enemy.destroy(); // Remove enemy on hit
-                            enemies.splice(index, 1); // Remove from enemies array
-                            updateScore(5); // Update score
-                            layer.draw();
-                        }
-                    });
+                    checkBulletCollision(bullet, bulletInterval);
                 }
-            }, layer);
-            bulletAnimation.start();
+                canvas.renderAll();
+            }, 20);
         }
 
-        // Score update function
-        function updateScore(points) {
-            score += points;
-            scoreText.text(`Score: ${score}`);
-            layer.draw();
+        // Check collision with enemies
+        function checkBulletCollision(bullet, bulletInterval) {
+            canvas.getObjects('circle').forEach((enemy) => {
+                if (enemy !== bullet && bullet.intersectsWithObject(enemy)) {
+                    // Collision detected
+                    clearInterval(bulletInterval);
+                    canvas.remove(bullet);
+                    canvas.remove(enemy);
+                    updateScore(5);
+                }
+            });
         }
 
         // Create enemies
-        const enemies = [];
+        const enemyInterval = setInterval(createEnemy, 2000);
+
         function createEnemy() {
-            const enemy = new Konva.Circle({
-                x: Math.random() * (width - 30) + 15,
-                y: 0,
+            const enemy = new fabric.Circle({
+                left: Math.random() * (width - 30) + 15,
+                top: 0,
                 fill: 'orange',
                 radius: 15,
+                selectable: false
             });
-            enemies.push(enemy);
-            layer.add(enemy);
+            canvas.add(enemy);
 
-            // Create an animation for the enemy
-            const enemyAnimation = new Konva.Animation(() => {
-                enemy.y(enemy.y() + 3); // Move the enemy down
-
-                if (enemy.y() > height) {
-                    enemy.destroy(); // Remove enemy if it goes off-screen
-                    enemies.splice(enemies.indexOf(enemy), 1); // Remove from enemies array
-                    updateScore(1); // Update score for missed enemy
-                    enemyAnimation.stop(); // Stop the animation
-                }
-
-                // Check for collision with the player
-                if (player.getClientRect().intersects(enemy.getClientRect())) {
+            const enemyInterval = setInterval(() => {
+                enemy.top += 3; // Move the enemy down
+                if (enemy.top > height) {
+                    clearInterval(enemyInterval);
+                    canvas.remove(enemy);
+                    updateScore(-1); // Update score for missed enemy
+                } else if (player.intersectsWithObject(enemy)) {
                     alert(`Game Over! Your final score: ${score}`);
-                    window.location.reload();
+                    window.location.reload(); // Reload the game on collision
                 }
-            }, layer);
-            enemyAnimation.start();
+                canvas.renderAll();
+            }, 20);
         }
 
-        // Start creating enemies immediately
-        setInterval(createEnemy, 2000);
+        // Update score function
+        function updateScore(points) {
+            score += points;
+            scoreText.text = `Score: ${score}`;
+            canvas.renderAll();
+        }
 
         // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
             const newWidth = window.innerWidth;
             const newHeight = window.innerHeight;
-            stage.width(newWidth);
-            stage.height(newHeight);
-            player.x(newWidth / 2);
-            player.y(newHeight - 30);
-            layer.draw();
+            canvas.setWidth(newWidth);
+            canvas.setHeight(newHeight);
+            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 50 });
+            canvas.renderAll();
         });
     </script>
 </body>
