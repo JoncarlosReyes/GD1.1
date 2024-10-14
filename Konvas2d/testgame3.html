@@ -63,13 +63,15 @@
             } else if (event.key === 'ArrowUp') {
                 player.y(Math.max(15, player.y() - step)); // Move up
             } else if (event.key === 'ArrowDown') {
-                player.y(Math.min(height - 30, player.y() + step)); // Move down
+                player.y(Math.min(height - 15, player.y() + step)); // Move down
+            } else if (event.key === ' ') { // Space bar for shooting
+                shootBullet();
             }
             layer.draw();
         });
 
-        // Shooting
-        document.addEventListener('click', (event) => {
+        // Function to shoot a bullet
+        function shootBullet() {
             const bullet = new Konva.Circle({
                 x: player.x(),
                 y: player.y() - 20,
@@ -78,22 +80,18 @@
             });
             layer.add(bullet);
             layer.draw();
-            shootBullet(bullet);
-        });
-
-        function shootBullet(bullet) {
             const bulletAnimation = new Konva.Animation(() => {
-                bullet.y(bullet.y() - 5); // Move the bullet up
+                bullet.y(bullet.y() - 5);
                 if (bullet.y() < 0) {
                     bullet.destroy(); // Remove bullet if it goes off-screen
                     layer.draw();
                 } else {
                     // Check collision with enemies
-                    enemies.forEach((enemy) => {
+                    enemies.forEach((enemy, index) => {
                         if (bullet.getClientRect().intersects(enemy.getClientRect())) {
                             bullet.destroy(); // Remove bullet on hit
                             enemy.destroy(); // Remove enemy on hit
-                            enemies.splice(enemies.indexOf(enemy), 1); // Remove from enemies array
+                            enemies.splice(index, 1); // Remove from enemies array
                             updateScore(5); // Update score
                             layer.draw();
                         }
