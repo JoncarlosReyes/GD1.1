@@ -32,12 +32,14 @@
     <button id="startButton">Start Game</button>
     <canvas id="canvas" style="display: none;"></canvas>
     <script>
+        // Initialize the Fabric.js canvas
         const canvas = new fabric.Canvas('canvas');
         const width = window.innerWidth;
         const height = window.innerHeight;
         canvas.setWidth(width);
         canvas.setHeight(height);
 
+        // Player setup
         const player = new fabric.Rect({
             left: width / 2 - 25,
             top: height - 50,
@@ -48,6 +50,7 @@
         });
         canvas.add(player);
 
+        // Score setup
         let score = 0;
         const scoreText = new fabric.Text(`Score: ${score}`, {
             left: 10,
@@ -58,12 +61,14 @@
         });
         canvas.add(scoreText);
 
+        // Update score function
         function updateScore(points) {
             score += points;
             scoreText.text = `Score: ${score}`;
             canvas.renderAll();
         }
 
+        // Player movement
         document.addEventListener('keydown', (event) => {
             const step = 10;
             if (event.key === 'ArrowLeft') {
@@ -74,6 +79,7 @@
             canvas.renderAll();
         });
 
+        // Shoot bullets
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
                 shootBullet();
@@ -141,11 +147,12 @@
         function startGame() {
             document.getElementById('startButton').style.display = 'none';
             document.getElementById('canvas').style.display = 'block';
-            setInterval(createObstacle, 2000);
+            setInterval(createObstacle, 2000); // Start creating obstacles
         }
 
         document.getElementById('startButton').addEventListener('click', startGame);
 
+        // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
             const newWidth = window.innerWidth;
             const newHeight = window.innerHeight;
