@@ -80,11 +80,13 @@
             });
             layer.add(bullet);
             layer.draw();
+
+            // Create a bullet animation
             const bulletAnimation = new Konva.Animation(() => {
-                bullet.y(bullet.y() - 5);
+                bullet.y(bullet.y() - 5); // Move the bullet up
                 if (bullet.y() < 0) {
                     bullet.destroy(); // Remove bullet if it goes off-screen
-                    layer.draw();
+                    bulletAnimation.stop(); // Stop the animation
                 } else {
                     // Check collision with enemies
                     enemies.forEach((enemy, index) => {
@@ -128,6 +130,7 @@
                     enemy.destroy(); // Remove enemy if it goes off-screen
                     enemies.splice(enemies.indexOf(enemy), 1); // Remove from enemies array
                     updateScore(1); // Update score for missed enemy
+                    enemyAnimation.stop(); // Stop the animation
                 }
 
                 // Check for collision with the player
@@ -136,7 +139,6 @@
                     window.location.reload();
                 }
             }, layer);
-            
             enemyAnimation.start();
         }
 
