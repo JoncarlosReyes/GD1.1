@@ -85,20 +85,25 @@
 
             const interval = setInterval(() => {
                 bullet.top -= 5;
+
                 // Check for bullet collision with obstacles
-                obstacles.forEach((obstacle, index) => {
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const obstacle = obstacles[i];
                     if (bullet.intersectsWithObject(obstacle)) {
                         canvas.remove(obstacle);
                         canvas.remove(bullet);
-                        obstacles.splice(index, 1);
+                        obstacles.splice(i, 1);  // Remove obstacle from array
                         updateScore(5); // Award points for hitting obstacle
-                        clearInterval(interval);
+                        clearInterval(interval); // Stop bullet movement
+                        return; // Exit the function
                     }
-                });
+                }
+
                 if (bullet.top < 0) {
                     clearInterval(interval);
                     canvas.remove(bullet);
                 }
+
                 canvas.renderAll();
             }, 20);
         }
