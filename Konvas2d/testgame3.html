@@ -60,6 +60,10 @@
                 player.x(Math.max(15, player.x() - step)); // Prevent going off-screen
             } else if (event.key === 'ArrowRight') {
                 player.x(Math.min(width - 15, player.x() + step)); // Prevent going off-screen
+            } else if (event.key === 'ArrowUp') {
+                player.y(Math.max(15, player.y() - step)); // Move up
+            } else if (event.key === 'ArrowDown') {
+                player.y(Math.min(height - 30, player.y() + step)); // Move down
             }
             layer.draw();
         });
@@ -79,7 +83,7 @@
 
         function shootBullet(bullet) {
             const bulletAnimation = new Konva.Animation(() => {
-                bullet.y(bullet.y() - 5);
+                bullet.y(bullet.y() - 5); // Move the bullet up
                 if (bullet.y() < 0) {
                     bullet.destroy(); // Remove bullet if it goes off-screen
                     layer.draw();
@@ -89,6 +93,7 @@
                         if (bullet.getClientRect().intersects(enemy.getClientRect())) {
                             bullet.destroy(); // Remove bullet on hit
                             enemy.destroy(); // Remove enemy on hit
+                            enemies.splice(enemies.indexOf(enemy), 1); // Remove from enemies array
                             updateScore(5); // Update score
                             layer.draw();
                         }
@@ -116,18 +121,24 @@
             });
             enemies.push(enemy);
             layer.add(enemy);
+
+            // Create an animation for the enemy
             const enemyAnimation = new Konva.Animation(() => {
-                enemy.y(enemy.y() + 3);
+                enemy.y(enemy.y() + 3); // Move the enemy down
+
                 if (enemy.y() > height) {
                     enemy.destroy(); // Remove enemy if it goes off-screen
-                    enemies.splice(enemies.indexOf(enemy), 1);
+                    enemies.splice(enemies.indexOf(enemy), 1); // Remove from enemies array
                     updateScore(1); // Update score for missed enemy
                 }
+
+                // Check for collision with the player
                 if (player.getClientRect().intersects(enemy.getClientRect())) {
                     alert(`Game Over! Your final score: ${score}`);
                     window.location.reload();
                 }
             }, layer);
+            
             enemyAnimation.start();
         }
 
