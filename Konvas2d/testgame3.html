@@ -72,12 +72,12 @@
         // Load player image
         fabric.Image.fromURL('guytest.png', function(img) {
             img.set({
-                left: width / 2 - 30, // Center the player image
-                top: height - 80, // Move up slightly to fit the bullet position
+                left: width / 2 - 40, // Center the player image
+                top: height - 90, // Move up slightly to fit the bullet position
                 selectable: false
             });
-            img.scaleToWidth(60);  // Increase width to make the image bigger
-            img.scaleToHeight(60); // Increase height to make the image bigger
+            img.scaleToWidth(80);  // Increased width to make the image bigger
+            img.scaleToHeight(80); // Increased height to make the image bigger
             canvas.add(img);
             player = img; // Assign to player variable for movement
         }, { crossOrigin: 'anonymous' });
@@ -104,8 +104,8 @@
         // Shooting bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
-                left: player.left + player.width / 2 - 5, // Center bullet under player image
-                top: player.top - 10, // Adjust this based on the player image size
+                left: player.left + player.width / 2 - 10, // Adjust left to position bullet in the center
+                top: player.top - 20, // Adjust this to position bullet at the top of the character
                 fill: 'red',
                 radius: 5,
                 selectable: false
@@ -233,7 +233,7 @@
             const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 80 }); // Adjust top to fit bullets
+            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 90 }); // Adjust top to fit bullets
             canvas.renderAll();
         });
     </script>
