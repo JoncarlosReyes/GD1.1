@@ -18,6 +18,9 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <!-- Audio element for gunshot sound effect -->
+    <audio id="gunshotSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
+
     <script>
         // Initialize the Fabric.js canvas
         const canvas = new fabric.Canvas('canvas');
@@ -47,6 +50,9 @@
         });
         canvas.add(scoreText);
 
+        // Load gunshot sound
+        const gunshotSound = document.getElementById('gunshotSound');
+
         // Player movement
         document.addEventListener('keydown', (event) => {
             const step = 10;
@@ -66,6 +72,9 @@
 
         // Function to shoot bullets
         function shootBullet() {
+            // Play gunshot sound
+            gunshotSound.play();
+
             const bullet = new fabric.Circle({
                 left: player.left + player.width / 2 - 5,
                 top: player.top - 10,
