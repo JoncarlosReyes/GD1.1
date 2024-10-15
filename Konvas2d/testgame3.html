@@ -87,10 +87,10 @@
             if (gamePaused || !player) return;
 
             const step = 10;
-            // Calculate new positions based on the key pressed
             let newLeft = player.left;
             let newTop = player.top;
 
+            // Calculate new positions based on the key pressed
             if (event.key === 'ArrowLeft') {
                 newLeft = Math.max(0, player.left - step);
             } else if (event.key === 'ArrowRight') {
