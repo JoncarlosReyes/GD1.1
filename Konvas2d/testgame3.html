@@ -20,6 +20,8 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <audio id="shootSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
+    <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
     <script>
         // Initialize the Fabric.js canvas
         const canvas = new fabric.Canvas('canvas');
@@ -72,6 +74,7 @@
                 selectable: false
             });
             canvas.add(bullet);
+            document.getElementById('shootSound').play(); // Play shoot sound
 
             const bulletInterval = setInterval(() => {
                 bullet.top -= 5;
@@ -93,6 +96,7 @@
                     clearInterval(bulletInterval);
                     canvas.remove(bullet); // Remove the bullet
                     canvas.remove(enemy);  // Remove the enemy
+                    document.getElementById('hitSound').play(); // Play hit sound
                     updateScore(5);        // Increase score for hit
                 }
             });
