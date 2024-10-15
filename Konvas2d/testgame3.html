@@ -30,16 +30,18 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Create player
-        const player = new fabric.Rect({
-            left: width / 2 - 25,
-            top: height - 50,
-            fill: 'blue',
-            width: 50,
-            height: 20,
-            selectable: false
+        // Load the tank image and create player
+        fabric.Image.fromURL('tankyellow.png', function(img) {
+            img.set({
+                left: width / 2 - 25,
+                top: height - 50,
+                selectable: false,
+                width: 50, // Set the width to match the blue rectangle size
+                height: 20 // Set the height to match the blue rectangle size
+            });
+            canvas.add(img);
+            window.player = img; // Store the player image in a global variable
         });
-        canvas.add(player);
 
         // Create score
         let score = 0;
