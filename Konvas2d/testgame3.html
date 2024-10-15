@@ -7,15 +7,15 @@
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.0.0/dist/fabric.min.js"></script>
     <style>
         body {
-            margin: 0; /* Removes default body margin */
-            padding: 0; /* Removes default body padding */
-            overflow: hidden; /* Prevents scrollbars from appearing */
-            background: url('grass.png') no-repeat center center fixed; /* Background image */
-            background-size: cover; /* Cover the entire background */
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: url('grass.png') no-repeat center center fixed;
+            background-size: cover;
         }
         canvas {
-            border: 1px solid #000; /* Adds a border around the canvas */
-            display: block; /* Eliminates extra space below the canvas */
+            border: 1px solid #000;
+            display: block; /* Ensures no extra space below the canvas */
         }
         .control-button {
             position: absolute;
@@ -26,7 +26,7 @@
             background-color: #333;
             color: white;
             border: none;
-            margin-left: 10px; /* Margin for buttons */
+            margin-left: 10px;
         }
         #pauseBtn { right: 150px; }
         #resumeBtn { right: 80px; }
@@ -73,14 +73,14 @@
         // Load player image
         fabric.Image.fromURL('guytest.png', function(img) {
             img.set({
-                left: width / 2 - 50, // Center the player image
-                top: height - 90, // Position player slightly above bottom
+                left: width / 2 - 75, // Center the player image with the new size
+                top: height - 130, // Move up slightly to fit the bullet position
                 selectable: false
             });
-            img.scaleToWidth(100);  // Increased width
-            img.scaleToHeight(100); // Increased height
+            img.scaleToWidth(150);  // Increased width to make the image bigger
+            img.scaleToHeight(150); // Increased height to make the image bigger
             canvas.add(img);
-            player = img; // Assign to player variable
+            player = img; // Assign to player variable for movement
         }, { crossOrigin: 'anonymous' });
 
         // Player movement
@@ -91,15 +91,15 @@
             let newLeft = player.left;
             let newTop = player.top;
 
-            // Calculate new positions based on key pressed
+            // Calculate new positions based on the key pressed
             if (event.key === 'ArrowLeft') {
                 newLeft = Math.max(0, player.left - step);
             } else if (event.key === 'ArrowRight') {
                 newLeft = Math.min(width - player.width, player.left + step);
             } else if (event.key === 'ArrowUp') {
-                newTop = Math.max(0, player.top - step); // Prevent moving above canvas
+                newTop = Math.max(0, player.top - step);
             } else if (event.key === 'ArrowDown') {
-                newTop = Math.min(height - player.height, player.top + step); // Prevent moving below canvas
+                newTop = Math.min(height - player.height, player.top + step);
             } else if (event.key === ' ') {
                 shootBullet();
             }
@@ -112,10 +112,10 @@
         // Shooting bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
-                left: player.left + player.width / 2 - 5, // Center bullet
-                top: player.top - 20, // Position bullet above player
+                left: player.left + player.width / 2 - 7.5, // Center bullet horizontally
+                top: player.top - 25, // Adjust bullet position to match the new player size
                 fill: 'red',
-                radius: 5,
+                radius: 7.5, // Adjusted bullet radius for visibility
                 selectable: false
             });
             canvas.add(bullet);
@@ -241,7 +241,7 @@
             const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 90 }); // Adjust top to fit
+            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 130 }); // Adjust top to fit
         });
     </script>
 </body>
