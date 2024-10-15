@@ -43,6 +43,7 @@
         let score = 0;
         let level = 1;
         let enemySpeed = 3;
+        let zigzag = false; // Toggle for zigzag movement
 
         const scoreText = new fabric.Text(`Score: ${score}`, {
             left: 10,
@@ -146,8 +147,17 @@
             });
             canvas.add(enemy);
 
+            let zigzagDirection = 1;
             const enemyMoveInterval = setInterval(() => {
+                // Alternate between zigzag and straight movement
+                if (zigzag) {
+                    enemy.left += 5 * zigzagDirection;
+                    if (enemy.left <= 0 || enemy.left >= width - enemy.radius * 2) {
+                        zigzagDirection *= -1; // Change direction at edges
+                    }
+                }
                 enemy.top += enemySpeed;
+
                 if (enemy.top > height) {
                     clearInterval(enemyMoveInterval);
                     canvas.remove(enemy);
@@ -174,6 +184,7 @@
                 level++;
                 levelText.text = `Level: ${level}`;
                 enemySpeed += 1; // Increase enemy speed with each level
+                zigzag = level % 2 === 0; // Toggle zigzag on even levels
             }
         }
 
