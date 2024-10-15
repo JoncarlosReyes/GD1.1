@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: url('backgroundshoot.png') no-repeat center center fixed; /* Background image */
+            background: url('grass.png') no-repeat center center fixed; /* Background image */
             background-size: cover; /* Make the background cover the entire viewport */
         }
         canvas {
@@ -30,20 +30,16 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Create player using an image
-        const playerImage = new Image();
-        playerImage.src = 'ttttt.png'; // Replace with your image path
-
-        playerImage.onload = () => {
-            const player = new fabric.Image(playerImage, {
-                left: width / 2 - 25,
-                top: height - 50,
-                width: 50, // Desired width
-                height: 20, // Desired height
-                selectable: false
-            });
-            canvas.add(player);
-        };
+        // Create player as a rectangle
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
+            fill: 'blue',
+            width: 50,
+            height: 20,
+            selectable: false
+        });
+        canvas.add(player);
 
         // Create score
         let score = 0;
