@@ -138,6 +138,7 @@
             });
         }
 
+        // Refined collision detection
         function detectCollision(bullet, enemy) {
             const bulletLeft = bullet.left;
             const bulletRight = bullet.left + bullet.radius * 2;
@@ -145,9 +146,9 @@
             const bulletBottom = bullet.top + bullet.radius * 2;
 
             const enemyLeft = enemy.left;
-            const enemyRight = enemy.left + enemy.width;
+            const enemyRight = enemy.left + enemy.width * enemy.scaleX;
             const enemyTop = enemy.top;
-            const enemyBottom = enemy.top + enemy.height;
+            const enemyBottom = enemy.top + enemy.height * enemy.scaleY;
 
             return (
                 bulletRight > enemyLeft &&
@@ -180,7 +181,7 @@
 
                     if (zigzag) {
                         img.left += 5 * zigzagDirection;
-                        if (img.left <= 0 || img.left >= width - img.width) {
+                        if (img.left <= 0 || img.left >= width - img.width * img.scaleX) {
                             zigzagDirection *= -1;
                         }
                     }
