@@ -10,6 +10,172 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+        }
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Initialize the Fabric.js canvas
+        const canvas = new fabric.Canvas('canvas');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+
+        // Create player image
+        const playerImg = new fabric.Image.fromURL('ttttt.png', (img) => {
+            img.set({
+                left: width / 2 - img.width / 2,
+                top: height - img.height - 10,
+                selectable: false
+            });
+            canvas.add(img);
+            canvas.renderAll();
+            player = img; // Set player variable to the image
+        });
+
+        // Create score
+        let score = 0;
+        const scoreText = new fabric.Text(`Score: ${score}`, {
+            left: 10,
+            top: 10,
+            fontSize: 24,
+            selectable: false
+        });
+        canvas.add(scoreText);
+
+        // Player movement
+        document.addEventListener('keydown', (event) => {
+            const step = 10;
+            if (event.key === 'ArrowLeft') {
+                player.left = Math.max(0, player.left - step);
+            } else if (event.key === 'ArrowRight') {
+                player.left = Math.min(width - player.width, player.left + step);
+            } else if (event.key === ' ') { // Space key to shoot
+                shootBullet();
+            }
+            canvas.renderAll();
+        });
+
+        // Function to shoot bullets
+        function shootBullet() {
+            const bullet = new fabric.Circle({
+                left: player.left + player.width / 2 - 5,
+                top: player.top - 10,
+                fill: 'red',
+                radius: 5,
+                selectable: false
+            });
+            canvas.add(bullet);
+
+            const bulletInterval = setInterval(() => {
+                bullet.top -= 5;
+                if (bullet.top < 0) {
+                    clearInterval(bulletInterval);
+                    canvas.remove(bullet);
+                } else {
+                    checkBulletCollision(bullet, bulletInterval);
+                }
+                canvas.renderAll();
+            }, 20);
+        }
+
+        // Check collision with enemies
+        function checkBulletCollision(bullet, bulletInterval) {
+            canvas.getObjects().forEach((enemy) => {
+                if (enemy.isEnemy && detectCollision(bullet, enemy)) {
+                    // Collision detected
+                    clearInterval(bulletInterval);
+                    canvas.remove(bullet); // Remove the bullet
+                    canvas.remove(enemy);  // Remove the enemy
+                    updateScore(5);        // Increase score for hit
+                }
+            });
+        }
+
+        // Collision detection by positional overlap
+        function detectCollision(bullet, enemy) {
+            const bulletLeft = bullet.left;
+            const bulletRight = bullet.left + bullet.radius * 2;
+            const bulletTop = bullet.top;
+            const bulletBottom = bullet.top + bullet.radius * 2;
+
+            const enemyLeft = enemy.left;
+            const enemyRight = enemy.left + enemy.radius * 2;
+            const enemyTop = enemy.top;
+            const enemyBottom = enemy.top + enemy.radius * 2;
+
+            return (
+                bulletRight > enemyLeft &&
+                bulletLeft < enemyRight &&
+                bulletBottom > enemyTop &&
+                bulletTop < enemyBottom
+            );
+        }
+
+        // Create enemies
+        const enemyInterval = setInterval(createEnemy, 2000);
+
+        function createEnemy() {
+            const enemy = new fabric.Circle({
+                left: Math.random() * (width - 30) + 15,
+                top: 0,
+                fill: 'orange',
+                radius: 15,
+                selectable: false,
+                isEnemy: true // Mark as enemy
+            });
+            canvas.add(enemy);
+
+            const enemyInterval = setInterval(() => {
+                enemy.top += 3; // Move the enemy down
+                if (enemy.top > height) {
+                    clearInterval(enemyInterval);
+                    canvas.remove(enemy);
+                    updateScore(-1); // Update score for missed enemy
+                } else if (player.intersectsWithObject(enemy)) {
+                    alert(`Game Over! Your final score: ${score}`);
+                    window.location.reload(); // Reload the game on collision
+                }
+                canvas.renderAll();
+            }, 20);
+        }
+
+        // Update score function
+        function updateScore(points) {
+            score += points;
+            scoreText.text = `Score: ${score}`;
+            canvas.renderAll();
+        }
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            canvas.setWidth(newWidth);
+            canvas.setHeight(newHeight);
+            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - player.height - 10 });
+            canvas.renderAll();
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Shooter Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.0.0/dist/fabric.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background: url('grass.png') no-repeat center center fixed; /* Background image */
             background-size: cover; /* Make the background cover the entire viewport */
         }
