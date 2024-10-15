@@ -19,25 +19,23 @@
 <body>
     <canvas id="canvas"></canvas>
     <script>
+        // Initialize the Fabric.js canvas
         const canvas = new fabric.Canvas('canvas');
         const width = window.innerWidth;
         const height = window.innerHeight;
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Load player image
-        fabric.Image.fromURL('tankfor2dgame.png', function(img) {
-            img.set({
-                left: width / 2 - img.width / 2,
-                top: height - 50,
-                selectable: false,
-                angle: 0 // Ensure it points forward
-            });
-            img.scaleToWidth(50); // Scale image if needed
-            img.scaleToHeight(30); // Adjust to fit canvas
-            canvas.add(img);
-            window.player = img; // Assign to global scope for player movement
+        // Create player as a rectangle
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
+            fill: 'blue',
+            width: 50,
+            height: 20,
+            selectable: false
         });
+        canvas.add(player);
 
         // Create score
         let score = 0;
@@ -49,7 +47,7 @@
         });
         canvas.add(scoreText);
 
-        // Sound effects
+        // Load audio files
         const shootSound = new Audio('574818__wesleyextreme_gamer__gunshot.ogg');
         const hitSound = new Audio('504629__roozydb__gib-sound.wav');
 
@@ -66,7 +64,6 @@
                 player.top = Math.min(height - player.height, player.top + step);
             } else if (event.key === ' ') { // Space key to shoot
                 shootBullet();
-                shootSound.play();
             }
             canvas.renderAll();
         });
@@ -81,6 +78,8 @@
                 selectable: false
             });
             canvas.add(bullet);
+
+            shootSound.play(); // Play shooting sound
 
             const bulletInterval = setInterval(() => {
                 bullet.top -= 5;
@@ -99,15 +98,15 @@
             canvas.getObjects().forEach((enemy) => {
                 if (enemy.isEnemy && detectCollision(bullet, enemy)) {
                     clearInterval(bulletInterval);
-                    canvas.remove(bullet);
-                    canvas.remove(enemy);
-                    updateScore(5);
-                    hitSound.play(); // Play hit sound on collision
+                    canvas.remove(bullet); // Remove the bullet
+                    canvas.remove(enemy);  // Remove the enemy
+                    hitSound.play();       // Play hit sound effect
+                    updateScore(5);        // Increase score for hit
                 }
             });
         }
 
-        // Collision detection
+        // Collision detection by positional overlap
         function detectCollision(bullet, enemy) {
             const bulletLeft = bullet.left;
             const bulletRight = bullet.left + bullet.radius * 2;
@@ -137,19 +136,19 @@
                 fill: 'orange',
                 radius: 15,
                 selectable: false,
-                isEnemy: true
+                isEnemy: true // Mark as enemy
             });
             canvas.add(enemy);
 
             const enemyInterval = setInterval(() => {
-                enemy.top += 3;
+                enemy.top += 3; // Move the enemy down
                 if (enemy.top > height) {
                     clearInterval(enemyInterval);
                     canvas.remove(enemy);
-                    updateScore(-1);
+                    updateScore(-1); // Update score for missed enemy
                 } else if (player.intersectsWithObject(enemy)) {
                     alert(`Game Over! Your final score: ${score}`);
-                    window.location.reload();
+                    window.location.reload(); // Reload the game on collision
                 }
                 canvas.renderAll();
             }, 20);
