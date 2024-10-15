@@ -18,8 +18,9 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <!-- Audio element for gunshot sound effect -->
+    <!-- Audio elements for sound effects -->
     <audio id="gunshotSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
+    <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
 
     <script>
         // Initialize the Fabric.js canvas
@@ -50,8 +51,9 @@
         });
         canvas.add(scoreText);
 
-        // Load gunshot sound
+        // Load sound effects
         const gunshotSound = document.getElementById('gunshotSound');
+        const hitSound = document.getElementById('hitSound');
 
         // Player movement
         document.addEventListener('keydown', (event) => {
@@ -105,6 +107,7 @@
                     canvas.remove(bullet); // Remove the bullet
                     canvas.remove(enemy);  // Remove the enemy
                     updateScore(5);        // Increase score for hit
+                    hitSound.play();       // Play hit sound effect
                 }
             });
         }
