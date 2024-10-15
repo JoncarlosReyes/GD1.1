@@ -30,18 +30,16 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Load the tank image and create player
-        fabric.Image.fromURL('tankyellow.png', function(img) {
-            img.set({
-                left: width / 2 - 25,
-                top: height - 50,
-                selectable: false,
-                width: 50, // Set the width to match the blue rectangle size
-                height: 20 // Set the height to match the blue rectangle size
-            });
-            canvas.add(img);
-            window.player = img; // Store the player image in a global variable
+        // Create player as a rectangle
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
+            fill: 'blue',
+            width: 50,
+            height: 20,
+            selectable: false
         });
+        canvas.add(player);
 
         // Create score
         let score = 0;
@@ -82,7 +80,7 @@
                 bullet.top -= 5;
                 if (bullet.top < 0) {
                     clearInterval(bulletInterval);
-                    canvas.remove(bullet);
+                    canvas.remove(bullet); // Remove the bullet when it goes off-screen
                 } else {
                     checkBulletCollision(bullet, bulletInterval);
                 }
@@ -95,7 +93,7 @@
             canvas.getObjects().forEach((enemy) => {
                 if (enemy.isEnemy && detectCollision(bullet, enemy)) {
                     // Collision detected
-                    clearInterval(bulletInterval);
+                    clearInterval(bulletInterval); // Stop the bullet interval
                     canvas.remove(bullet); // Remove the bullet
                     canvas.remove(enemy);  // Remove the enemy
                     document.getElementById('hitSound').play(); // Play hit sound
