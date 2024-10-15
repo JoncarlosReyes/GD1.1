@@ -85,13 +85,14 @@
 
         // Check collision with enemies
         function checkBulletCollision(bullet, bulletInterval) {
-            canvas.getObjects('circle').forEach((enemy) => {
-                if (enemy !== bullet && bullet.intersectsWithObject(enemy)) {
+            canvas.getObjects().forEach((enemy) => {
+                // Ensure we're only checking against enemy circles by color
+                if (enemy.fill === 'orange' && bullet.intersectsWithObject(enemy)) {
                     // Collision detected
                     clearInterval(bulletInterval);
-                    canvas.remove(bullet);
-                    canvas.remove(enemy);
-                    updateScore(5);
+                    canvas.remove(bullet); // Remove the bullet
+                    canvas.remove(enemy);  // Remove the enemy
+                    updateScore(5);        // Increase score for hit
                 }
             });
         }
