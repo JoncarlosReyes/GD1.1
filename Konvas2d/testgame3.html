@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jc's shooting game</title>
+    <title>JC's Shooter Game</title>
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.0.0/dist/fabric.min.js"></script>
     <style>
         body {
@@ -30,21 +30,7 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Variables for level and score
-        let score = 0;
-        let level = 1;
-        let scoreMultiplier = 1;
-
-        // Create score display
-        const scoreText = new fabric.Text(`Score: ${score}`, {
-            left: 10,
-            top: 10,
-            fontSize: 24,
-            selectable: false
-        });
-        canvas.add(scoreText);
-
-        // Player setup
+        // Create player
         const player = new fabric.Rect({
             left: width / 2 - 25,
             top: height - 50,
@@ -55,20 +41,34 @@
         });
         canvas.add(player);
 
-        // Player movement and shooting
+        // Create score
+        let score = 0;
+        const scoreText = new fabric.Text(`Score: ${score}`, {
+            left: 10,
+            top: 10,
+            fontSize: 24,
+            selectable: false
+        });
+        canvas.add(scoreText);
+
+        // Player movement
         document.addEventListener('keydown', (event) => {
             const step = 10;
             if (event.key === 'ArrowLeft') {
                 player.left = Math.max(0, player.left - step);
             } else if (event.key === 'ArrowRight') {
                 player.left = Math.min(width - player.width, player.left + step);
+            } else if (event.key === 'ArrowUp') {
+                player.top = Math.max(0, player.top - step); // Move up
+            } else if (event.key === 'ArrowDown') {
+                player.top = Math.min(height - player.height, player.top + step); // Move down
             } else if (event.key === ' ') { // Space key to shoot
                 shootBullet();
             }
             canvas.renderAll();
         });
 
-        // Bullet shooting function
+        // Function to shoot bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
                 left: player.left + player.width / 2 - 5,
@@ -92,20 +92,21 @@
             }, 20);
         }
 
-        // Check bullet collision with enemies
+        // Check collision with enemies
         function checkBulletCollision(bullet, bulletInterval) {
             canvas.getObjects().forEach((enemy) => {
                 if (enemy.isEnemy && detectCollision(bullet, enemy)) {
+                    // Collision detected
                     clearInterval(bulletInterval);
-                    canvas.remove(bullet);
-                    canvas.remove(enemy);
-                    document.getElementById('hitSound').play();
-                    updateScore(5);
+                    canvas.remove(bullet); // Remove the bullet
+                    canvas.remove(enemy);  // Remove the enemy
+                    document.getElementById('hitSound').play(); // Play hit sound
+                    updateScore(5);        // Increase score for hit
                 }
             });
         }
 
-        // Collision detection helper
+        // Collision detection by positional overlap
         function detectCollision(bullet, enemy) {
             const bulletLeft = bullet.left;
             const bulletRight = bullet.left + bullet.radius * 2;
@@ -125,27 +126,9 @@
             );
         }
 
-        // Adjust score and level
-        function updateScore(points) {
-            score += points * scoreMultiplier;
-            scoreText.text = `Score: ${score}`;
-            canvas.renderAll();
-            if (score >= level * 100) {
-                levelUp();
-            }
-        }
+        // Create enemies
+        const enemyInterval = setInterval(createEnemy, 2000);
 
-        // Level up function to increase difficulty
-        function levelUp() {
-            level++;
-            scoreMultiplier += 0.5; // Increase score multiplier
-            clearInterval(enemyInterval); // Stop current enemy interval
-            const newEnemyInterval = 2000 - (level * 100); // Faster spawn rate per level
-            enemyInterval = setInterval(createEnemy, newEnemyInterval);
-            alert(`Level ${level}!`);
-        }
-
-        // Create enemies with varying speeds and patterns
         function createEnemy() {
             const enemy = new fabric.Circle({
                 left: Math.random() * (width - 30) + 15,
@@ -157,28 +140,26 @@
             });
             canvas.add(enemy);
 
-            const enemySpeed = 2 + level; // Increase speed with each level
-            const enemyPattern = level % 2 === 0 ? 'zigzag' : 'straight'; // Alternate patterns
-
             const enemyInterval = setInterval(() => {
-                if (enemyPattern === 'zigzag') {
-                    enemy.left += Math.sin(enemy.top / 20) * 10; // Zigzag pattern
-                }
-                enemy.top += enemySpeed;
+                enemy.top += 3; // Move the enemy down
                 if (enemy.top > height) {
                     clearInterval(enemyInterval);
                     canvas.remove(enemy);
-                    updateScore(-1); // Decrease score for missed enemy
+                    updateScore(-1); // Update score for missed enemy
                 } else if (player.intersectsWithObject(enemy)) {
                     alert(`Game Over! Your final score: ${score}`);
-                    window.location.reload(); // Reload game on collision
+                    window.location.reload(); // Reload the game on collision
                 }
                 canvas.renderAll();
             }, 20);
         }
 
-        // Initialize enemies with interval
-        let enemyInterval = setInterval(createEnemy, 2000);
+        // Update score function
+        function updateScore(points) {
+            score += points;
+            scoreText.text = `Score: ${score}`;
+            canvas.renderAll();
+        }
 
         // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
