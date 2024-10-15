@@ -113,7 +113,7 @@
         function shootBullet() {
             const bullet = new fabric.Circle({
                 left: player.left + player.width / 2 - 20, // Move bullet a bit to the left
-                top: player.top - 25, // Adjust bullet position to match the new player size
+                top: player.top - 25, // Adjust bullet position to be higher above the player
                 fill: 'red',
                 radius: 7.5, // Adjusted bullet radius for visibility
                 selectable: false
