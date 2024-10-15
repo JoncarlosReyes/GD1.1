@@ -16,12 +16,30 @@
         canvas {
             border: 1px solid #000;
         }
+        .control-button {
+            position: absolute;
+            top: 10px;
+            font-size: 16px;
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            margin-left: 10px;
+        }
+        #pauseBtn { right: 150px; }
+        #resumeBtn { right: 80px; }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <audio id="shootSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
     <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
+    
+    <!-- Pause and Resume buttons -->
+    <button id="pauseBtn" class="control-button">Pause</button>
+    <button id="resumeBtn" class="control-button">Resume</button>
+
     <script>
         const canvas = new fabric.Canvas('canvas');
         const width = window.innerWidth;
@@ -43,7 +61,8 @@
         let score = 0;
         let level = 1;
         let enemySpeed = 3;
-        let zigzag = false; // Toggle for zigzag movement
+        let zigzag = false;
+        let gamePaused = false;
 
         const scoreText = new fabric.Text(`Score: ${score}`, {
             left: 10,
@@ -62,6 +81,8 @@
 
         // Player movement
         document.addEventListener('keydown', (event) => {
+            if (gamePaused) return;
+
             const step = 10;
             if (event.key === 'ArrowLeft') {
                 player.left = Math.max(0, player.left - step);
@@ -134,9 +155,11 @@
         }
 
         // Enemy creation
-        const enemyInterval = setInterval(createEnemy, 2000);
+        let enemyInterval = setInterval(createEnemy, 2000);
 
         function createEnemy() {
+            if (gamePaused) return;
+
             const enemy = new fabric.Circle({
                 left: Math.random() * (width - 30) + 15,
                 top: 0,
@@ -149,11 +172,13 @@
 
             let zigzagDirection = 1;
             const enemyMoveInterval = setInterval(() => {
+                if (gamePaused) return;
+
                 // Alternate between zigzag and straight movement
                 if (zigzag) {
                     enemy.left += 5 * zigzagDirection;
                     if (enemy.left <= 0 || enemy.left >= width - enemy.radius * 2) {
-                        zigzagDirection *= -1; // Change direction at edges
+                        zigzagDirection *= -1;
                     }
                 }
                 enemy.top += enemySpeed;
@@ -170,6 +195,18 @@
             }, 20);
         }
 
+        // Pause and resume functionality
+        document.getElementById('pauseBtn').onclick = () => {
+            gamePaused = true;
+            clearInterval(enemyInterval);
+        };
+
+        document.getElementById('resumeBtn').onclick = () => {
+            if (!gamePaused) return;
+            gamePaused = false;
+            enemyInterval = setInterval(createEnemy, 2000);
+        };
+
         // Score and level update
         function updateScore(points) {
             score += points;
@@ -183,8 +220,8 @@
             if (score >= level * 100) {
                 level++;
                 levelText.text = `Level: ${level}`;
-                enemySpeed += 1; // Increase enemy speed with each level
-                zigzag = level % 2 === 0; // Toggle zigzag on even levels
+                enemySpeed += 1;
+                zigzag = level % 2 === 0;
             }
         }
 
