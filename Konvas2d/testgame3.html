@@ -10,12 +10,11 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #000; /* Fallback background color */
+            background: url('grass.png') no-repeat center center fixed;
+            background-size: cover;
         }
         canvas {
             border: 1px solid #000;
-            background: url('grass.png') no-repeat center center; /* Set background on canvas */
-            background-size: cover; /* Cover the canvas area */
         }
         .control-button {
             position: absolute;
@@ -43,8 +42,8 @@
 
     <script>
         const canvas = new fabric.Canvas('canvas');
-        const width = window.innerWidth * 0.8; // 80% of the viewport width
-        const height = window.innerHeight * 0.8; // 80% of the viewport height
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         canvas.setWidth(width);
         canvas.setHeight(height);
 
@@ -73,12 +72,12 @@
         // Load player image
         fabric.Image.fromURL('guytest.png', function(img) {
             img.set({
-                left: width / 2 - 40, // Center the player image
+                left: width / 2 - 50, // Center the player image with the new size
                 top: height - 90, // Move up slightly to fit the bullet position
                 selectable: false
             });
-            img.scaleToWidth(80);  // Increased width to make the image bigger
-            img.scaleToHeight(80); // Increased height to make the image bigger
+            img.scaleToWidth(100);  // Increased width to make the image bigger
+            img.scaleToHeight(100); // Increased height to make the image bigger
             canvas.add(img);
             player = img; // Assign to player variable for movement
         }, { crossOrigin: 'anonymous' });
@@ -105,7 +104,7 @@
         // Shooting bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
-                left: player.left + player.width / 2 - 35, // Adjust left to position bullet further left
+                left: player.left + player.width / 2 - 60, // Move bullet further left by 35 pixels
                 top: player.top - 20, // Keep bullet at the top of the character
                 fill: 'red',
                 radius: 5,
@@ -230,12 +229,11 @@
 
         // Adjust canvas size on window resize
         window.addEventListener('resize', () => {
-            const newWidth = Math.min(window.innerWidth * 0.8, width); // Keep the new width within limits
-            const newHeight = Math.min(window.innerHeight * 0.8, height); // Keep the new height within limits
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 90 }); // Adjust top to fit bullets
-            canvas.renderAll();
+            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 90 }); // Adjust top to fit
         });
     </script>
 </body>
