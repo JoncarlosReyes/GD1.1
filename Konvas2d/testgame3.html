@@ -35,7 +35,7 @@
     <canvas id="canvas"></canvas>
     <audio id="shootSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
     <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
-    
+
     <!-- Pause and Resume buttons -->
     <button id="pauseBtn" class="control-button">Pause</button>
     <button id="resumeBtn" class="control-button">Resume</button>
@@ -47,17 +47,7 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Initialize player, score, and level
-        const player = new fabric.Rect({
-            left: width / 2 - 25,
-            top: height - 50,
-            fill: 'blue',
-            width: 50,
-            height: 20,
-            selectable: false
-        });
-        canvas.add(player);
-
+        let player;
         let score = 0;
         let level = 1;
         let enemySpeed = 3;
@@ -79,9 +69,22 @@
         canvas.add(scoreText);
         canvas.add(levelText);
 
+        // Load player image
+        fabric.Image.fromURL('guytest.png', function(img) {
+            img.set({
+                left: width / 2 - 15,
+                top: height - 50,
+                selectable: false
+            });
+            img.scaleToWidth(30);  // Width to match the enemy diameter
+            img.scaleToHeight(30); // Height to match the enemy diameter
+            canvas.add(img);
+            player = img; // Assign to player variable for movement
+        });
+
         // Player movement
         document.addEventListener('keydown', (event) => {
-            if (gamePaused) return;
+            if (gamePaused || !player) return;
 
             const step = 10;
             if (event.key === 'ArrowLeft') {
@@ -174,7 +177,6 @@
             const enemyMoveInterval = setInterval(() => {
                 if (gamePaused) return;
 
-                // Alternate between zigzag and straight movement
                 if (zigzag) {
                     enemy.left += 5 * zigzagDirection;
                     if (enemy.left <= 0 || enemy.left >= width - enemy.radius * 2) {
@@ -187,7 +189,7 @@
                     clearInterval(enemyMoveInterval);
                     canvas.remove(enemy);
                     updateScore(-1);
-                } else if (player.intersectsWithObject(enemy)) {
+                } else if (player && player.intersectsWithObject(enemy)) {
                     alert(`Game Over! Your final score: ${score}`);
                     window.location.reload();
                 }
@@ -231,7 +233,7 @@
             const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 50 });
+            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 50 });
             canvas.renderAll();
         });
     </script>
