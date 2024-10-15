@@ -10,11 +10,12 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: url('grass.png') no-repeat center center fixed;
-            background-size: cover;
+            background-color: #000; /* Fallback background color */
         }
         canvas {
             border: 1px solid #000;
+            background: url('grass.png') no-repeat center center; /* Set background on canvas */
+            background-size: cover; /* Cover the canvas area */
         }
         .control-button {
             position: absolute;
