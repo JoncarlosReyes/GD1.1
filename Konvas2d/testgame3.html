@@ -104,8 +104,8 @@
         // Shooting bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
-                left: player.left + player.width / 2 - 10, // Adjust left to position bullet in the center
-                top: player.top - 20, // Adjust this to position bullet at the top of the character
+                left: player.left + player.width / 2 - 15, // Adjust left to position bullet further left
+                top: player.top - 20, // Keep bullet at the top of the character
                 fill: 'red',
                 radius: 5,
                 selectable: false
