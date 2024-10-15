@@ -10,6 +10,8 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            background: url('backgroundshoot.png') no-repeat center center fixed; /* Background image */
+            background-size: cover; /* Make the background cover the entire viewport */
         }
         canvas {
             border: 1px solid #000;
@@ -18,6 +20,8 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <audio id="shootSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
+    <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
     <script>
         // Initialize the Fabric.js canvas
         const canvas = new fabric.Canvas('canvas');
@@ -26,19 +30,16 @@
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        // Create player image with adjusted size
-        fabric.Image.fromURL('ttttt.png', (img) => {
-            img.set({
-                left: width / 2 - 15, // Center horizontally
-                top: height - 30, // Position above the bottom
-                width: 30, // Set width to match enemy size
-                height: 30, // Set height to match enemy size
-                selectable: false
-            });
-            canvas.add(img);
-            player = img; // Set player variable to the image
-            canvas.renderAll();
+        // Create player
+        const player = new fabric.Rect({
+            left: width / 2 - 25,
+            top: height - 50,
+            fill: 'blue',
+            width: 50,
+            height: 20,
+            selectable: false
         });
+        canvas.add(player);
 
         // Create score
         let score = 0;
@@ -73,6 +74,7 @@
                 selectable: false
             });
             canvas.add(bullet);
+            document.getElementById('shootSound').play(); // Play shoot sound
 
             const bulletInterval = setInterval(() => {
                 bullet.top -= 5;
@@ -94,6 +96,7 @@
                     clearInterval(bulletInterval);
                     canvas.remove(bullet); // Remove the bullet
                     canvas.remove(enemy);  // Remove the enemy
+                    document.getElementById('hitSound').play(); // Play hit sound
                     updateScore(5);        // Increase score for hit
                 }
             });
@@ -160,7 +163,7 @@
             const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 30 });
+            player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 50 });
             canvas.renderAll();
         });
     </script>
