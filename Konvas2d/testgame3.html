@@ -29,6 +29,7 @@
         }
         #pauseBtn { right: 150px; }
         #resumeBtn { right: 80px; }
+        #resetBtn { right: 220px; }
     </style>
 </head>
 <body>
@@ -36,9 +37,10 @@
     <audio id="shootSound" src="574818__wesleyextreme_gamer__gunshot.ogg" preload="auto"></audio>
     <audio id="hitSound" src="504629__roozydb__gib-sound.wav" preload="auto"></audio>
 
-    <!-- Pause and Resume buttons -->
+    <!-- Pause, Resume, and Reset buttons -->
     <button id="pauseBtn" class="control-button">Pause</button>
     <button id="resumeBtn" class="control-button">Resume</button>
+    <button id="resetBtn" class="control-button">Reset</button>
 
     <script>
         const canvas = new fabric.Canvas('canvas');
@@ -200,7 +202,7 @@
             }, { crossOrigin: 'anonymous' });
         }
 
-        // Pause and resume functionality
+        // Pause, resume, and reset functionality
         document.getElementById('pauseBtn').onclick = () => {
             gamePaused = true;
             clearInterval(enemyInterval);
@@ -211,6 +213,31 @@
             gamePaused = false;
             enemyInterval = setInterval(createEnemy, 2000);
         };
+
+        document.getElementById('resetBtn').onclick = () => {
+            resetGame();
+        };
+
+        function resetGame() {
+            gamePaused = true;
+            score = 0;
+            level = 1;
+            enemySpeed = 3;
+            zigzag = false;
+            canvas.clear();
+            canvas.add(scoreText);
+            canvas.add(levelText);
+            scoreText.text = `Score: ${score}`;
+            levelText.text = `Level: ${level}`;
+            if (player) {
+                player.set({ left: width / 2 - 50, top: height - 90 });
+                canvas.add(player);
+            }
+            canvas.renderAll();
+            gamePaused = false;
+            clearInterval(enemyInterval);
+            enemyInterval = setInterval(createEnemy, 2000);
+        }
 
         // Score and level update
         function updateScore(points) {
