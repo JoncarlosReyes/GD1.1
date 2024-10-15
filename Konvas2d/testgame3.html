@@ -15,7 +15,6 @@
         }
         canvas {
             border: 1px solid #000;
-            display: block; /* Ensures no extra space below the canvas */
         }
         .control-button {
             position: absolute;
@@ -73,12 +72,12 @@
         // Load player image
         fabric.Image.fromURL('guytest.png', function(img) {
             img.set({
-                left: width / 2 - 75, // Center the player image with the new size
-                top: height - 130, // Move up slightly to fit the bullet position
+                left: width / 2 - 50, // Center the player image with the new size
+                top: height - 90, // Move up slightly to fit the bullet position
                 selectable: false
             });
-            img.scaleToWidth(150);  // Increased width to make the image bigger
-            img.scaleToHeight(150); // Increased height to make the image bigger
+            img.scaleToWidth(100);  // Increased width to make the image bigger
+            img.scaleToHeight(100); // Increased height to make the image bigger
             canvas.add(img);
             player = img; // Assign to player variable for movement
         }, { crossOrigin: 'anonymous' });
@@ -88,34 +87,27 @@
             if (gamePaused || !player) return;
 
             const step = 10;
-            let newLeft = player.left;
-            let newTop = player.top;
-
-            // Calculate new positions based on the key pressed
             if (event.key === 'ArrowLeft') {
-                newLeft = Math.max(0, player.left - step);
+                player.left = Math.max(0, player.left - step);
             } else if (event.key === 'ArrowRight') {
-                newLeft = Math.min(width - player.width, player.left + step);
+                player.left = Math.min(width - player.width, player.left + step);
             } else if (event.key === 'ArrowUp') {
-                newTop = Math.max(0, player.top - step);
+                player.top = Math.max(0, player.top - step);
             } else if (event.key === 'ArrowDown') {
-                newTop = Math.min(height - player.height, player.top + step);
+                player.top = Math.min(height - player.height, player.top + step);
             } else if (event.key === ' ') {
                 shootBullet();
             }
-
-            // Update player position
-            player.set({ left: newLeft, top: newTop });
             canvas.renderAll();
         });
 
         // Shooting bullets
         function shootBullet() {
             const bullet = new fabric.Circle({
-                left: player.left + player.width / 2 - 20, // Move bullet a bit to the left
-                top: player.top - 30, // Adjust bullet position to be higher above the player
+                left: player.left + player.width / 2 - 60, // Move bullet further left by 35 pixels
+                top: player.top - 20, // Keep bullet at the top of the character
                 fill: 'red',
-                radius: 7.5, // Adjusted bullet radius for visibility
+                radius: 5,
                 selectable: false
             });
             canvas.add(bullet);
@@ -241,7 +233,7 @@
             const newHeight = window.innerHeight;
             canvas.setWidth(newWidth);
             canvas.setHeight(newHeight);
-            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 130 }); // Adjust top to fit
+            if (player) player.set({ left: newWidth / 2 - player.width / 2, top: newHeight - 90 }); // Adjust top to fit
         });
     </script>
 </body>
