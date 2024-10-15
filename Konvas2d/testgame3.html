@@ -85,15 +85,35 @@
 
         // Check collision with enemies
         function checkBulletCollision(bullet, bulletInterval) {
-            canvas.getObjects().forEach((obj) => {
-                if (obj.isEnemy && bullet.intersectsWithObject(obj)) {
+            canvas.getObjects().forEach((enemy) => {
+                if (enemy.isEnemy && detectCollision(bullet, enemy)) {
                     // Collision detected
                     clearInterval(bulletInterval);
                     canvas.remove(bullet); // Remove the bullet
-                    canvas.remove(obj);    // Remove the enemy
+                    canvas.remove(enemy);  // Remove the enemy
                     updateScore(5);        // Increase score for hit
                 }
             });
+        }
+
+        // Collision detection by positional overlap
+        function detectCollision(bullet, enemy) {
+            const bulletLeft = bullet.left;
+            const bulletRight = bullet.left + bullet.radius * 2;
+            const bulletTop = bullet.top;
+            const bulletBottom = bullet.top + bullet.radius * 2;
+
+            const enemyLeft = enemy.left;
+            const enemyRight = enemy.left + enemy.radius * 2;
+            const enemyTop = enemy.top;
+            const enemyBottom = enemy.top + enemy.radius * 2;
+
+            return (
+                bulletRight > enemyLeft &&
+                bulletLeft < enemyRight &&
+                bulletBottom > enemyTop &&
+                bulletTop < enemyBottom
+            );
         }
 
         // Create enemies
