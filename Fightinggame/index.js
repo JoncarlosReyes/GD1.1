@@ -18,5 +18,8 @@ const player= new Sprite({
   y:0
   })
 player.draw()
+const enemy= new Sprite({
+  x:400
+})
 console.log(player)
 
