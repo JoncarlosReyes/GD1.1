@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Babylon.js Chessboard</title>
+    <title>Babylon.js Chessboard with GLB Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+    <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
+    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export GLB</button>
+    
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
-        let selectedPiece = null;
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -25,7 +27,6 @@
             // Chessboard
             const boardSize = 8;
             const tileSize = 1;
-            const tiles = [];
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
@@ -34,60 +35,69 @@
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
-                    tile.isTile = true;
-                    tiles.push(tile);
                 }
             }
 
-            return { scene, tiles };
+            return scene;
         };
 
-        const { scene, tiles } = createScene();
+        const scene = createScene();
 
-        const addChessPieces = (scene) => {
-            const pieceMaterialWhite = new BABYLON.StandardMaterial("pieceMatWhite", scene);
-            pieceMaterialWhite.diffuseColor = new BABYLON.Color3(1, 1, 1);
-            
-            const pieceMaterialBlack = new BABYLON.StandardMaterial("pieceMatBlack", scene);
-            pieceMaterialBlack.diffuseColor = new BABYLON.Color3(0, 0, 0);
-
-            const createPiece = (name, position, colorMaterial) => {
-                const piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
+        const createPiece = (name, position) => {
+            BABYLON.SceneLoader.ImportMesh("", "./", `${name}.glb`, scene, (meshes) => {
+                const piece = meshes[0];
                 piece.position = position;
-                piece.material = colorMaterial;
-                piece.isPiece = true;
-            };
+                piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5); // Adjust scaling if needed
 
-            // Place pawns
-            for (let i = 0; i < 8; i++) {
-                createPiece(`whitePawn${i}`, new BABYLON.Vector3(i - 3.5, 0.5, 1.5), pieceMaterialWhite);
-                createPiece(`blackPawn${i}`, new BABYLON.Vector3(i - 3.5, 0.5, -1.5), pieceMaterialBlack);
-            }
-
-            // Place other pieces as needed...
+                piece.actionManager = new BABYLON.ActionManager(scene);
+                piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                    selectedPiece = piece;
+                }));
+            });
         };
 
-        addChessPieces(scene);
+        const lightColor = new BABYLON.Color3(1, 1, 1);
+        const darkColor = new BABYLON.Color3(0, 0, 0);
 
-        // Handle piece selection and movement
-        scene.onPointerObservable.add((pointerInfo) => {
-            switch (pointerInfo.type) {
-                case BABYLON.PointerEventTypes.POINTERPICK:
-                    const pickedMesh = pointerInfo.pickInfo.pickedMesh;
-                    if (!pickedMesh) return;
+        // Place pieces with corresponding GLB files
+        const positions = {
+            rook: [new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Vector3(3.5, 0.5, -3.5)],
+            knight: [new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Vector3(2.5, 0.5, -3.5)],
+            bishop: [new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Vector3(1.5, 0.5, -3.5)],
+            queen: [new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Vector3(-0.5, 0.5, -3.5)],
+            king: [new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Vector3(0.5, 0.5, -3.5)],
+            pawn: [
+                new BABYLON.Vector3(-3.5, 0.5, 2.5), new BABYLON.Vector3(-2.5, 0.5, 2.5), new BABYLON.Vector3(-1.5, 0.5, 2.5), new BABYLON.Vector3(-0.5, 0.5, 2.5),
+                new BABYLON.Vector3(0.5, 0.5, 2.5), new BABYLON.Vector3(1.5, 0.5, 2.5), new BABYLON.Vector3(2.5, 0.5, 2.5), new BABYLON.Vector3(3.5, 0.5, 2.5),
+                new BABYLON.Vector3(-3.5, 0.5, -2.5), new BABYLON.Vector3(-2.5, 0.5, -2.5), new BABYLON.Vector3(-1.5, 0.5, -2.5), new BABYLON.Vector3(-0.5, 0.5, -2.5),
+                new BABYLON.Vector3(0.5, 0.5, -2.5), new BABYLON.Vector3(1.5, 0.5, -2.5), new BABYLON.Vector3(2.5, 0.5, -2.5), new BABYLON.Vector3(3.5, 0.5, -2.5)
+            ]
+        };
 
-                    if (pickedMesh.isPiece) {
-                        // Select the piece
-                        selectedPiece = pickedMesh;
-                        console.log("Piece selected:", pickedMesh.name);
-                    } else if (pickedMesh.isTile && selectedPiece) {
-                        // Move the selected piece to the clicked tile
-                        selectedPiece.position = new BABYLON.Vector3(pickedMesh.position.x, 0.5, pickedMesh.position.z);
-                        console.log("Moved piece to tile:", pickedMesh.name);
-                        selectedPiece = null; // Deselect after moving
-                    }
-                    break;
+        // Load pieces
+        for (const piece in positions) {
+            positions[piece].forEach((pos, index) => {
+                createPiece(piece, pos);
+            });
+        }
+
+        let selectedPiece = null;
+
+        scene.onPointerDown = (evt, pickResult) => {
+            if (selectedPiece) {
+                const pickedTile = pickResult.pickedMesh;
+                if (pickedTile && pickedTile.name.startsWith("tile")) {
+                    selectedPiece.position.x = pickedTile.position.x;
+                    selectedPiece.position.z = pickedTile.position.z;
+                    selectedPiece = null; // Deselect the piece after moving
+                }
             }
+        };
+
+        document.getElementById("exportButton").addEventListener("click", () => {
+            BABYLON.GLTF2Export.GLBAsync(scene, "chessboard").then((glb) => {
+                glb.downloadFiles();
+            });
         });
 
         engine.runRenderLoop(() => {
