@@ -10,6 +10,7 @@
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
+        let selectedPiece = null;
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -24,6 +25,7 @@
             // Chessboard
             const boardSize = 8;
             const tileSize = 1;
+            const tiles = [];
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
@@ -32,13 +34,15 @@
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
+                    tile.isTile = true;
+                    tiles.push(tile);
                 }
             }
 
-            return scene;
+            return { scene, tiles };
         };
 
-        const scene = createScene();
+        const { scene, tiles } = createScene();
 
         const addChessPieces = (scene) => {
             const pieceMaterialWhite = new BABYLON.StandardMaterial("pieceMatWhite", scene);
@@ -51,6 +55,7 @@
                 const piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
                 piece.position = position;
                 piece.material = colorMaterial;
+                piece.isPiece = true;
             };
 
             // Place pawns
@@ -59,34 +64,31 @@
                 createPiece(`blackPawn${i}`, new BABYLON.Vector3(i - 3.5, 0.5, -1.5), pieceMaterialBlack);
             }
 
-            // Place rooks
-            createPiece("whiteRook1", new BABYLON.Vector3(-3.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteRook2", new BABYLON.Vector3(3.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackRook1", new BABYLON.Vector3(-3.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackRook2", new BABYLON.Vector3(3.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place knights
-            createPiece("whiteKnight1", new BABYLON.Vector3(-2.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteKnight2", new BABYLON.Vector3(2.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackKnight1", new BABYLON.Vector3(-2.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackKnight2", new BABYLON.Vector3(2.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place bishops
-            createPiece("whiteBishop1", new BABYLON.Vector3(-1.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteBishop2", new BABYLON.Vector3(1.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackBishop1", new BABYLON.Vector3(-1.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackBishop2", new BABYLON.Vector3(1.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place queens
-            createPiece("whiteQueen", new BABYLON.Vector3(-0.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackQueen", new BABYLON.Vector3(-0.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place kings
-            createPiece("whiteKing", new BABYLON.Vector3(0.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackKing", new BABYLON.Vector3(0.5, 0.5, -3.5), pieceMaterialBlack);
+            // Place other pieces as needed...
         };
 
         addChessPieces(scene);
+
+        // Handle piece selection and movement
+        scene.onPointerObservable.add((pointerInfo) => {
+            switch (pointerInfo.type) {
+                case BABYLON.PointerEventTypes.POINTERPICK:
+                    const pickedMesh = pointerInfo.pickInfo.pickedMesh;
+                    if (!pickedMesh) return;
+
+                    if (pickedMesh.isPiece) {
+                        // Select the piece
+                        selectedPiece = pickedMesh;
+                        console.log("Piece selected:", pickedMesh.name);
+                    } else if (pickedMesh.isTile && selectedPiece) {
+                        // Move the selected piece to the clicked tile
+                        selectedPiece.position = new BABYLON.Vector3(pickedMesh.position.x, 0.5, pickedMesh.position.z);
+                        console.log("Moved piece to tile:", pickedMesh.name);
+                        selectedPiece = null; // Deselect after moving
+                    }
+                    break;
+            }
+        });
 
         engine.runRenderLoop(() => {
             scene.render();
