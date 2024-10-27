@@ -29,7 +29,6 @@ const player= new Sprite({
     y:0
   }
 })
-player.draw()
 const enemy= new Sprite({
   position:{
   x:400,
@@ -40,10 +39,12 @@ const enemy= new Sprite({
     y:0
   }
 })
-enemy.draw()
+
 console.log(player)
 function animate(){
   window.requestAnimationFrame(animate)
+  c.fillstyle='black'
+  c.fillRect(0,0, canvas.width, canvas.height)
  player.update()
   enemy.update()
 }
