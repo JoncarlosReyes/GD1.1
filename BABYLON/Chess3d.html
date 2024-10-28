@@ -27,7 +27,6 @@
         let turnTimer;  // Timer for each turn
         const turnTimeLimit = 30; // Time limit for each turn in seconds
         let remainingTime = turnTimeLimit;
-        const checkmateMessages = ["Checkmate! White Wins!", "Checkmate! Black Wins!"];
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -124,165 +123,86 @@
             switch (piece.name) {
                 case "pawn":
                     if (piece.isWhite) {
-                        return (deltaZ === 1 && deltaX === 0 && !targetTile.piece) || (deltaZ === 1 && Math.abs(deltaX) === 1 && targetTile.piece && !targetTile.piece.isWhite);
+                        return (deltaZ === 1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
+                               (deltaZ === 1 && Math.abs(deltaX) === 1 && isOccupiedByOpponent(piece, targetTile)); // Capture
                     } else {
-                        return (deltaZ === -1 && deltaX === 0 && !targetTile.piece) || (deltaZ === -1 && Math.abs(deltaX) === 1 && targetTile.piece && targetTile.piece.isWhite);
+                        return (deltaZ === -1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
+                               (deltaZ === -1 && Math.abs(deltaX) === 1 && isOccupiedByOpponent(piece, targetTile)); // Capture
                     }
-                case "rook":
-                    return (deltaX === 0 || deltaZ === 0) && !isPathBlocked(piece, targetTile);
-                case "knight":
-                    return (Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2);
-                case "bishop":
-                    return Math.abs(deltaX) === Math.abs(deltaZ) && !isPathBlocked(piece, targetTile);
-                case "queen":
-                    return (Math.abs(deltaX) === Math.abs(deltaZ) || deltaX === 0 || deltaZ === 0) && !isPathBlocked(piece, targetTile);
-                case "king":
-                    return Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1;
+                // Add additional logic for other pieces...
                 default:
                     return false;
             }
         };
 
-        const isPathBlocked = (piece, targetTile) => {
-            const startX = piece.position.x;
-            const startZ = piece.position.z;
-            const endX = targetTile.position.x;
-            const endZ = targetTile.position.z;
+        const isOccupied = (tile) => {
+            return tile.piece !== undefined;
+        };
 
-            const deltaX = endX - startX;
-            const deltaZ = endZ - startZ;
-            const stepX = deltaX === 0 ? 0 : deltaX > 0 ? 1 : -1;
-            const stepZ = deltaZ === 0 ? 0 : deltaZ > 0 ? 1 : -1;
-
-            let x = startX + stepX;
-            let z = startZ + stepZ;
-
-            while (x !== endX || z !== endZ) {
-                const tile = scene.getMeshByName(`tile${z + 3.5}_${x + 3.5}`);
-                if (tile && tile.piece) {
-                    return true; // Path is blocked by another piece
-                }
-                x += stepX;
-                z += stepZ;
-            }
-            return false;
+        const isOccupiedByOpponent = (piece, targetTile) => {
+            return targetTile.piece && targetTile.piece.isWhite !== piece.isWhite;
         };
 
         const movePiece = (piece, targetTile) => {
-            if (isValidMove(piece, targetTile)) {
-                if (targetTile.piece) {
-                    // Capture the piece
-                    scene.removeMesh(targetTile.piece);
-                    targetTile.piece.dispose(); // Remove the captured piece from the scene
+            // Check for capture
+            if (isOccupied(targetTile)) {
+                targetTile.piece.dispose(); // Remove the captured piece
+            }
+            targetTile.piece = piece; // Set the piece on the target tile
+            piece.position = targetTile.position; // Move the piece to the new position
+            selectedPiece = null; // Deselect piece
+            toggleTurn(); // Switch turn
+        };
+
+        const toggleTurn = () => {
+            turnWhite = !turnWhite;
+            turnIndicator.textContent = turnWhite ? "White's Turn" : "Black's Turn";
+            resetTimer(); // Reset the timer for the new turn
+        };
+
+        const resetTimer = () => {
+            remainingTime = turnTimeLimit;
+            clearInterval(turnTimer);
+            turnTimer = setInterval(() => {
+                remainingTime--;
+                if (remainingTime <= 0) {
+                    alert(`${turnWhite ? "White" : "Black"} ran out of time!`);
+                    clearInterval(turnTimer);
+                    toggleTurn();
                 }
-                targetTile.piece = piece; // Move the piece to the target tile
-                piece.position = targetTile.position; // Update piece's position
-                piece.isSelected = false; // Deselect the piece
-
-                // Check for check or checkmate conditions
-                checkForCheckmate();
-
-                // Change turn
-                turnWhite = !turnWhite;
-                turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
-
-                // Reset timer
-                remainingTime = turnTimeLimit;
-            }
+            }, 1000);
         };
 
-        const checkForCheckmate = () => {
-            // Implement check/checkmate logic
-            const whiteKings = pieces.filter(p => p.name === "king" && p.isWhite);
-            const blackKings = pieces.filter(p => p.name === "king" && !p.isWhite);
-
-            const isWhiteInCheck = whiteKings.some(king => !isSafe(king));
-            const isBlackInCheck = blackKings.some(king => !isSafe(king));
-
-            if (isWhiteInCheck && !isAnyLegalMoveAvailable(whiteKings)) {
-                alert(checkmateMessages[1]); // Black wins
-                resetGame();
-            } else if (isBlackInCheck && !isAnyLegalMoveAvailable(blackKings)) {
-                alert(checkmateMessages[0]); // White wins
-                resetGame();
-            }
-        };
-
-        const isAnyLegalMoveAvailable = (kings) => {
-            for (const king of kings) {
-                const kingPosition = king.position;
-                for (const tile of scene.meshes.filter(m => m.name.startsWith("tile"))) {
-                    if (isValidMove(king, tile)) {
-                        return true; // There is at least one legal move available
+        scene.onPointerDown = (evt) => {
+            const pickResult = scene.pick(evt.x, evt.y);
+            if (pickResult.hit) {
+                const targetTile = pickResult.pickedMesh;
+                if (selectedPiece) {
+                    if (isValidMove(selectedPiece, targetTile)) {
+                        movePiece(selectedPiece, targetTile);
+                    }
+                } else {
+                    if (targetTile.piece) {
+                        selectedPiece = targetTile.piece;
                     }
                 }
             }
-            return false; // No legal moves available
-        };
-
-        const isSafe = (king) => {
-            const enemyPieces = pieces.filter(p => p.isWhite !== king.isWhite);
-            for (const enemyPiece of enemyPieces) {
-                const targetTile = scene.getMeshByName(`tile${king.position.z + 3.5}_${king.position.x + 3.5}`);
-                if (isValidMove(enemyPiece, targetTile)) {
-                    return false; // The king is in check
-                }
-            }
-            return true; // The king is safe
-        };
-
-        const resetGame = () => {
-            pieces.forEach(piece => {
-                piece.position.y = 0.5; // Reset all pieces to their starting position
-                piece.isSelected = false; // Deselect all pieces
-                piece.material = new BABYLON.StandardMaterial(piece.name + "Mat", scene);
-                const tileName = `${piece.position.z + 3.5}_${piece.position.x + 3.5}`;
-                const tile = scene.getMeshByName(`tile${tileName}`);
-                tile.piece = piece; // Reset piece position on tiles
-            });
-            turnWhite = true; // Reset to white's turn
-            turnIndicator.innerText = "White's Turn"; // Reset turn indicator
-            remainingTime = turnTimeLimit; // Reset turn timer
         };
 
         const exportSTL = () => {
-            const exporter = new BABYLON.STLExport(scene);
-            exporter.asArrayBuffer().then(buffer => {
-                const blob = new Blob([buffer], { type: 'application/octet-stream' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'chessboard.stl';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            });
+            const stlData = BABYLON.STLExport.MeshToSTL(scene.getMeshes());
+            const blob = new Blob([stlData], { type: "application/octet-stream" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "chessboard.stl";
+            link.click();
         };
 
-        document.getElementById("exportButton").addEventListener("click", exportSTL);
+        document.getElementById("exportButton").onclick = exportSTL;
 
         engine.runRenderLoop(() => {
             scene.render();
-            if (turnTimer) {
-                remainingTime -= engine.getDeltaTime() / 1000; // Decrement time
-                if (remainingTime <= 0) {
-                    alert(`${turnWhite ? "White" : "Black"} time's up!`);
-                    resetGame(); // Reset game if time's up
-                }
-            }
         });
-
-        // Start timer for turns
-        setInterval(() => {
-            if (turnTimer) {
-                remainingTime -= 1;
-                if (remainingTime <= 0) {
-                    alert(`${turnWhite ? "White" : "Black"} time's up!`);
-                    resetGame(); // Reset game if time's up
-                }
-            }
-        }, 1000);
 
         window.addEventListener("resize", () => {
             engine.resize();
