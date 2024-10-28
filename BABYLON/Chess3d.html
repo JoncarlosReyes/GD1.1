@@ -5,13 +5,29 @@
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
+    <style>
+        #turnIndicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: black;
+        }
+    </style>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <div id="turnIndicator">White's Turn</div>
+    <button id="exportButton" style="position: absolute; top: 50px; left: 10px;">Export STL</button>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
+        let turnWhite = true;  // Track whose turn it is
+        const turnIndicator = document.getElementById("turnIndicator");
+        let turnTimer;  // Timer for each turn
+        const turnTimeLimit = 30; // Time limit for each turn in seconds
+        let remainingTime = turnTimeLimit;
+        const checkmateMessages = ["Checkmate! White Wins!", "Checkmate! Black Wins!"];
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -29,11 +45,12 @@
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, {size: tileSize}, scene);
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, { size: tileSize }, scene);
                     tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
+                    tile.piece = undefined; // Track which piece is on this tile
                 }
             }
 
@@ -45,13 +62,13 @@
         const createPiece = (name, position, color, isWhite) => {
             let piece;
             switch (name) {
-                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.4}, scene); break;
-                case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.6}, scene); break;
-                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 0.6}, scene); break;
-                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene); break;
-                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 0.8}, scene); break;
-                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 0.9}, scene); break;
-                default: piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, { diameter: 0.4 }, scene); break;
+                case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.6 }, scene); break;
+                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.6 }, scene); break;
+                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, { diameter: 0.5, thickness: 0.15 }, scene); break;
+                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.8 }, scene); break;
+                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.9 }, scene); break;
+                default: piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.5 }, scene);
             }
 
             piece.position = position;
@@ -65,12 +82,12 @@
             piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
                 selectedPiece = piece;
             }));
+
             return piece;
         };
 
         const pieces = [];
         let selectedPiece = null;
-        let turnWhite = true;  // Track whose turn it is
 
         // Place pawns
         for (let i = 0; i < 8; i++) {
@@ -107,20 +124,18 @@
             switch (piece.name) {
                 case "pawn":
                     if (piece.isWhite) {
-                        return (deltaZ === 1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
-                               (deltaZ === 1 && Math.abs(deltaX) === 1 && isOccupied(targetTile) && !targetTile.piece.isWhite); // Capture
+                        return (deltaZ === 1 && deltaX === 0 && !targetTile.piece) || (deltaZ === 1 && Math.abs(deltaX) === 1 && targetTile.piece && !targetTile.piece.isWhite);
                     } else {
-                        return (deltaZ === -1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
-                               (deltaZ === -1 && Math.abs(deltaX) === 1 && isOccupied(targetTile) && targetTile.piece.isWhite); // Capture
+                        return (deltaZ === -1 && deltaX === 0 && !targetTile.piece) || (deltaZ === -1 && Math.abs(deltaX) === 1 && targetTile.piece && targetTile.piece.isWhite);
                     }
                 case "rook":
-                    return (deltaX === 0 || deltaZ === 0) && !isOccupiedPath(piece, targetTile);
+                    return (deltaX === 0 || deltaZ === 0) && !isPathBlocked(piece, targetTile);
                 case "knight":
                     return (Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2);
                 case "bishop":
-                    return Math.abs(deltaX) === Math.abs(deltaZ) && !isOccupiedPath(piece, targetTile);
+                    return Math.abs(deltaX) === Math.abs(deltaZ) && !isPathBlocked(piece, targetTile);
                 case "queen":
-                    return (deltaX === 0 || deltaZ === 0 || Math.abs(deltaX) === Math.abs(deltaZ)) && !isOccupiedPath(piece, targetTile);
+                    return (Math.abs(deltaX) === Math.abs(deltaZ) || deltaX === 0 || deltaZ === 0) && !isPathBlocked(piece, targetTile);
                 case "king":
                     return Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1;
                 default:
@@ -128,72 +143,146 @@
             }
         };
 
-        const isOccupied = (tile) => {
-            return tile.piece !== undefined;
-        };
-
-        const isOccupiedPath = (piece, targetTile) => {
+        const isPathBlocked = (piece, targetTile) => {
             const startX = piece.position.x;
             const startZ = piece.position.z;
-            const targetX = targetTile.position.x;
-            const targetZ = targetTile.position.z;
+            const endX = targetTile.position.x;
+            const endZ = targetTile.position.z;
 
-            const stepX = Math.sign(targetX - startX);
-            const stepZ = Math.sign(targetZ - startZ);
+            const deltaX = endX - startX;
+            const deltaZ = endZ - startZ;
+            const stepX = deltaX === 0 ? 0 : deltaX > 0 ? 1 : -1;
+            const stepZ = deltaZ === 0 ? 0 : deltaZ > 0 ? 1 : -1;
 
-            let currentX = startX + stepX;
-            let currentZ = startZ + stepZ;
+            let x = startX + stepX;
+            let z = startZ + stepZ;
 
-            while (currentX !== targetX || currentZ !== targetZ) {
-                const currentTile = getTileAt(currentX, currentZ);
-                if (isOccupied(currentTile)) {
-                    return true;
+            while (x !== endX || z !== endZ) {
+                const tile = scene.getMeshByName(`tile${z + 3.5}_${x + 3.5}`);
+                if (tile && tile.piece) {
+                    return true; // Path is blocked by another piece
                 }
-                currentX += stepX;
-                currentZ += stepZ;
+                x += stepX;
+                z += stepZ;
             }
             return false;
         };
 
-        const getTileAt = (x, z) => {
-            return pieces.find(p => p.position.x === x && p.position.z === z) || { position: { x: x, z: z }, piece: undefined };
+        const movePiece = (piece, targetTile) => {
+            if (isValidMove(piece, targetTile)) {
+                if (targetTile.piece) {
+                    // Capture the piece
+                    scene.removeMesh(targetTile.piece);
+                    targetTile.piece.dispose(); // Remove the captured piece from the scene
+                }
+                targetTile.piece = piece; // Move the piece to the target tile
+                piece.position = targetTile.position; // Update piece's position
+                piece.isSelected = false; // Deselect the piece
+
+                // Check for check or checkmate conditions
+                checkForCheckmate();
+
+                // Change turn
+                turnWhite = !turnWhite;
+                turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
+
+                // Reset timer
+                remainingTime = turnTimeLimit;
+            }
         };
 
-        scene.onBeforeRenderObservable.add(() => {
-            if (selectedPiece) {
-                // Implement logic to show valid moves or highlight tiles
-                const potentialMoves = pieces.filter(targetTile => isValidMove(selectedPiece, targetTile));
-                potentialMoves.forEach(move => {
-                    move.material.diffuseColor = new BABYLON.Color3(0, 1, 0); // Highlight valid move
-                });
-            }
-        });
+        const checkForCheckmate = () => {
+            // Implement check/checkmate logic
+            const whiteKings = pieces.filter(p => p.name === "king" && p.isWhite);
+            const blackKings = pieces.filter(p => p.name === "king" && !p.isWhite);
 
-        scene.onPointerObservable.add((pointerInfo) => {
-            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK) {
-                const pickResult = scene.pick(scene.pointerX, scene.pointerY);
-                if (pickResult.hit) {
-                    const targetTile = pickResult.pickedMesh;
-                    if (selectedPiece) {
-                        if (isValidMove(selectedPiece, targetTile)) {
-                            // Move the piece
-                            targetTile.piece = selectedPiece;
-                            selectedPiece.position = targetTile.position;
-                            selectedPiece = null;
-                            turnWhite = !turnWhite;  // Switch turns
-                        }
+            const isWhiteInCheck = whiteKings.some(king => !isSafe(king));
+            const isBlackInCheck = blackKings.some(king => !isSafe(king));
+
+            if (isWhiteInCheck && !isAnyLegalMoveAvailable(whiteKings)) {
+                alert(checkmateMessages[1]); // Black wins
+                resetGame();
+            } else if (isBlackInCheck && !isAnyLegalMoveAvailable(blackKings)) {
+                alert(checkmateMessages[0]); // White wins
+                resetGame();
+            }
+        };
+
+        const isAnyLegalMoveAvailable = (kings) => {
+            for (const king of kings) {
+                const kingPosition = king.position;
+                for (const tile of scene.meshes.filter(m => m.name.startsWith("tile"))) {
+                    if (isValidMove(king, tile)) {
+                        return true; // There is at least one legal move available
                     }
+                }
+            }
+            return false; // No legal moves available
+        };
+
+        const isSafe = (king) => {
+            const enemyPieces = pieces.filter(p => p.isWhite !== king.isWhite);
+            for (const enemyPiece of enemyPieces) {
+                const targetTile = scene.getMeshByName(`tile${king.position.z + 3.5}_${king.position.x + 3.5}`);
+                if (isValidMove(enemyPiece, targetTile)) {
+                    return false; // The king is in check
+                }
+            }
+            return true; // The king is safe
+        };
+
+        const resetGame = () => {
+            pieces.forEach(piece => {
+                piece.position.y = 0.5; // Reset all pieces to their starting position
+                piece.isSelected = false; // Deselect all pieces
+                piece.material = new BABYLON.StandardMaterial(piece.name + "Mat", scene);
+                const tileName = `${piece.position.z + 3.5}_${piece.position.x + 3.5}`;
+                const tile = scene.getMeshByName(`tile${tileName}`);
+                tile.piece = piece; // Reset piece position on tiles
+            });
+            turnWhite = true; // Reset to white's turn
+            turnIndicator.innerText = "White's Turn"; // Reset turn indicator
+            remainingTime = turnTimeLimit; // Reset turn timer
+        };
+
+        const exportSTL = () => {
+            const exporter = new BABYLON.STLExport(scene);
+            exporter.asArrayBuffer().then(buffer => {
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chessboard.stl';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        };
+
+        document.getElementById("exportButton").addEventListener("click", exportSTL);
+
+        engine.runRenderLoop(() => {
+            scene.render();
+            if (turnTimer) {
+                remainingTime -= engine.getDeltaTime() / 1000; // Decrement time
+                if (remainingTime <= 0) {
+                    alert(`${turnWhite ? "White" : "Black"} time's up!`);
+                    resetGame(); // Reset game if time's up
                 }
             }
         });
 
-        document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.StlExport.AsciiExport(scene, "chessboard.stl");
-        });
-
-        engine.runRenderLoop(() => {
-            scene.render();
-        });
+        // Start timer for turns
+        setInterval(() => {
+            if (turnTimer) {
+                remainingTime -= 1;
+                if (remainingTime <= 0) {
+                    alert(`${turnWhite ? "White" : "Black"} time's up!`);
+                    resetGame(); // Reset game if time's up
+                }
+            }
+        }, 1000);
 
         window.addEventListener("resize", () => {
             engine.resize();
