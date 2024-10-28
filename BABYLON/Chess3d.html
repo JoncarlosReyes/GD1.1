@@ -112,13 +112,34 @@
                     // If there's an opponent's piece, capture it
                     if (targetPiece) {
                         if (selectedPiece.isWhite !== targetPiece.isWhite) {
-                            targetPiece.dispose();  // Remove the captured piece from the scene
-                            pieces.splice(pieces.indexOf(targetPiece), 1);  // Remove from the pieces array
+                            // Move the captured piece out of the board
+                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
+                            console.log(`${targetPiece.name} captured!`);
                         } else {
                             console.log("Cannot capture your own piece.");
                             return; // Can't capture your own piece
                         }
                     }
 
-                    selectedPiece.position.x = pickedTile.position.x;
-                    selectedPiece.position.z = pickedTile
+                    // Move the selected piece to the target tile
+                    selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
+                    selectedPiece = null; // Deselect piece
+                    turnWhite = !turnWhite; // Switch turn
+                }
+            }
+        };
+
+        document.getElementById("exportButton").addEventListener("click", () => {
+            BABYLON.StlExporter.Export(scene, "ChessPieces");
+        });
+
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
