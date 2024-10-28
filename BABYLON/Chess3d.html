@@ -104,33 +104,21 @@
             if (selectedPiece) {
                 const pickedTile = pickResult.pickedMesh;
                 if (pickedTile && pickedTile.name.startsWith("tile")) {
+                    // Check if there's already a piece on the picked tile
+                    const targetPiece = pieces.find(piece => 
+                        piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
+                    );
+
+                    // If there's an opponent's piece, capture it
+                    if (targetPiece) {
+                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
+                            targetPiece.dispose();  // Remove the captured piece from the scene
+                            pieces.splice(pieces.indexOf(targetPiece), 1);  // Remove from the pieces array
+                        } else {
+                            console.log("Cannot capture your own piece.");
+                            return; // Can't capture your own piece
+                        }
+                    }
+
                     selectedPiece.position.x = pickedTile.position.x;
-                    selectedPiece.position.z = pickedTile.position.z;
-                    selectedPiece = null;
-                    turnWhite = !turnWhite; // Switch turns
-                }
-            }
-        };
-
-        document.getElementById("exportButton").addEventListener("click", () => {
-            pieces.forEach(piece => {
-                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
-                const blob = new Blob([stlString], { type: 'application/octet-stream' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${piece.name}.stl`;
-                link.click();
-            });
-        });
-
-        engine.runRenderLoop(() => {
-            scene.render();
-        });
-
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
-    </script>
-</body>
-</html>
+                    selectedPiece.position.z = pickedTile
