@@ -100,37 +100,95 @@
         pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
         pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
-        scene.onPointerDown = (evt, pickResult) => {
-            if (selectedPiece) {
-                const pickedTile = pickResult.pickedMesh;
-                if (pickedTile && pickedTile.name.startsWith("tile")) {
-                    // Check if there's already a piece on the picked tile
-                    const targetPiece = pieces.find(piece => 
-                        piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
-                    );
+        const isValidMove = (piece, targetTile) => {
+            const deltaX = targetTile.position.x - piece.position.x;
+            const deltaZ = targetTile.position.z - piece.position.z;
 
-                    // If there's an opponent's piece, capture it
-                    if (targetPiece) {
-                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
-                            // Move the captured piece out of the board
-                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
-                            console.log(`${targetPiece.name} captured!`);
-                        } else {
-                            console.log("Cannot capture your own piece.");
-                            return; // Can't capture your own piece
-                        }
+            switch (piece.name) {
+                case "pawn":
+                    if (piece.isWhite) {
+                        return (deltaZ === 1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
+                               (deltaZ === 1 && Math.abs(deltaX) === 1 && isOccupied(targetTile) && !targetTile.piece.isWhite); // Capture
+                    } else {
+                        return (deltaZ === -1 && deltaX === 0 && !isOccupied(targetTile)) ||  // Move forward
+                               (deltaZ === -1 && Math.abs(deltaX) === 1 && isOccupied(targetTile) && targetTile.piece.isWhite); // Capture
                     }
-
-                    // Move the selected piece to the target tile
-                    selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
-                    selectedPiece = null; // Deselect piece
-                    turnWhite = !turnWhite; // Switch turn
-                }
+                case "rook":
+                    return (deltaX === 0 || deltaZ === 0) && !isOccupiedPath(piece, targetTile);
+                case "knight":
+                    return (Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2);
+                case "bishop":
+                    return Math.abs(deltaX) === Math.abs(deltaZ) && !isOccupiedPath(piece, targetTile);
+                case "queen":
+                    return (deltaX === 0 || deltaZ === 0 || Math.abs(deltaX) === Math.abs(deltaZ)) && !isOccupiedPath(piece, targetTile);
+                case "king":
+                    return Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1;
+                default:
+                    return false;
             }
         };
 
+        const isOccupied = (tile) => {
+            return tile.piece !== undefined;
+        };
+
+        const isOccupiedPath = (piece, targetTile) => {
+            const startX = piece.position.x;
+            const startZ = piece.position.z;
+            const targetX = targetTile.position.x;
+            const targetZ = targetTile.position.z;
+
+            const stepX = Math.sign(targetX - startX);
+            const stepZ = Math.sign(targetZ - startZ);
+
+            let currentX = startX + stepX;
+            let currentZ = startZ + stepZ;
+
+            while (currentX !== targetX || currentZ !== targetZ) {
+                const currentTile = getTileAt(currentX, currentZ);
+                if (isOccupied(currentTile)) {
+                    return true;
+                }
+                currentX += stepX;
+                currentZ += stepZ;
+            }
+            return false;
+        };
+
+        const getTileAt = (x, z) => {
+            return pieces.find(p => p.position.x === x && p.position.z === z) || { position: { x: x, z: z }, piece: undefined };
+        };
+
+        scene.onBeforeRenderObservable.add(() => {
+            if (selectedPiece) {
+                // Implement logic to show valid moves or highlight tiles
+                const potentialMoves = pieces.filter(targetTile => isValidMove(selectedPiece, targetTile));
+                potentialMoves.forEach(move => {
+                    move.material.diffuseColor = new BABYLON.Color3(0, 1, 0); // Highlight valid move
+                });
+            }
+        });
+
+        scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK) {
+                const pickResult = scene.pick(scene.pointerX, scene.pointerY);
+                if (pickResult.hit) {
+                    const targetTile = pickResult.pickedMesh;
+                    if (selectedPiece) {
+                        if (isValidMove(selectedPiece, targetTile)) {
+                            // Move the piece
+                            targetTile.piece = selectedPiece;
+                            selectedPiece.position = targetTile.position;
+                            selectedPiece = null;
+                            turnWhite = !turnWhite;  // Switch turns
+                        }
+                    }
+                }
+            }
+        });
+
         document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.StlExporter.Export(scene, "ChessPieces");
+            BABYLON.StlExport.AsciiExport(scene, "chessboard.stl");
         });
 
         engine.runRenderLoop(() => {
