@@ -26,30 +26,28 @@
             // Light
             const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-           // Chessboard
+// Chessboard
 const boardSize = 8;
 const tileSize = 1;
 
-for (let row = 0; row < boardSize + 2; row++) {
-    for (let col = 0; col < boardSize + 2; col++) {
+for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
         const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, { size: tileSize }, scene);
-        tile.position = new BABYLON.Vector3(row - (boardSize / 2 + 1), 0, col - (boardSize / 2 + 1));
+        tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
         const tileMaterial = new BABYLON.StandardMaterial(`tileMat_${row}_${col}`, scene);
         
-        // Edge tiles (black and white)
-        if (row === 0 || row === boardSize + 1 || col === 0 || col === boardSize + 1) {
-            tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(1, 1, 1);
-        } 
-        // Main board tiles (red and blue)
-        else {
-            tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 0, 0) : new BABYLON.Color3(0, 0, 1);
-        }
+        // Alternate colors between red and blue
+        tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 0, 0) : new BABYLON.Color3(0, 0, 1);
         
         tile.material = tileMaterial;
     }
 }
 
+// Optional: Create border tiles if needed
+// This could involve an outer ring of meshes in black and white or a visual grid overlay if only for reference
+
 return scene;
+
 
         };
 
