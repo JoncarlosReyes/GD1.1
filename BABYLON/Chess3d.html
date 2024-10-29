@@ -58,7 +58,7 @@
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
                     const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, { size: tileSize }, scene);
-                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
+                    tile.position = new BABYLON.Vector3(col - boardSize / 2 + 0.5, 0, row - boardSize / 2 + 0.5);
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
@@ -128,7 +128,7 @@
         };
 
         const resetGame = () => {
-            pieces.forEach(piece => piece.position.y = 0.5); // Reset pieces to original position
+            pieces.forEach(piece => piece.position.y = -1); // Reset pieces off the board
             turnWhite = true; // Reset to White's turn
             turnIndicator.innerText = "White's Turn";
             clearInterval(timer);
@@ -223,29 +223,29 @@
             return false; // Path is clear
         };
 
-        // Create pieces
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-4.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-3.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-2.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-1.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(0.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(1.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(2.5, 0.5, 0), new BABYLON.Color3(1, 1, 1), true));
+        // Create pieces with corrected initial positions
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-4.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(1, 1, 1), true));
         for (let i = 0; i < 8; i++) {
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2.5), new BABYLON.Color3(1, 1, 1), true));
         }
 
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-4.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-3.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-2.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-1.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(0.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(1.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(2.5, 0.5, -1), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-4.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-3.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-2.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-1.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(0.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(1.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(2.5, 0.5, -4.5), new BABYLON.Color3(0, 0, 0), false));
         for (let i = 0; i < 8; i++) {
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
         }
 
         startTimer(); // Start the timer at the beginning
