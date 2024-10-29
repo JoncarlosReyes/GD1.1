@@ -123,50 +123,48 @@
         const isValidMove = (piece, targetTile) => {
             const deltaX = targetTile.position.x - piece.position.x;
             const deltaZ = targetTile.position.z - piece.position.z;
+            const direction = piece.isWhite ? 1 : -1; // White moves up (+1), Black moves down (-1)
+            const initialRow = piece.isWhite ? 1 : 6; // Starting row for pawns
 
+            // Pawn movement logic
+            if (piece.name === "pawn") {
+                // Move forward one square
+                if (deltaZ === direction && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z)) {
+                    return true;
+                }
+                // Capture diagonally
+                if (deltaZ === direction && Math.abs(deltaX) === 1 && pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z && p.isWhite !== piece.isWhite)) {
+                    return true;
+                }
+                // Double move from initial position
+                if (piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && (p.position.z === targetTile.position.z - direction))) {
+                    return true;
+                }
+                return false; // If none of the conditions are met, it's an invalid move
+            }
+
+            // Other pieces movement logic
             switch (piece.name) {
-                case "pawn":
-                    const direction = piece.isWhite ? 1 : -1; // White moves up (+1), Black moves down (-1)
-                    const initialRow = piece.isWhite ? 1 : 6; // Starting row for pawns
-
-                    // Move forward one square
-                    if (deltaZ === direction && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z)) {
-                        return true;
-                    }
-                    // Capture diagonally
-                    if (deltaZ === direction && Math.abs(deltaX) === 1 && pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z && p.isWhite !== piece.isWhite)) {
-                        return true;
-                    }
-                    // Double move from initial position
-                    if (piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && (p.position.z === targetTile.position.z - direction))) {
-                        return true;
-                    }
-                    break;
-
                 case "rook":
                     if (deltaX === 0 || deltaZ === 0) {
                         return true; // Can move in straight lines
                     }
                     break;
-
                 case "knight":
                     if ((Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2)) {
                         return true; // L-shaped move
                     }
                     break;
-
                 case "bishop":
                     if (Math.abs(deltaX) === Math.abs(deltaZ)) {
                         return true; // Diagonal moves
                     }
                     break;
-
                 case "queen":
                     if (deltaX === 0 || deltaZ === 0 || Math.abs(deltaX) === Math.abs(deltaZ)) {
                         return true; // Straight or diagonal moves
                     }
                     break;
-
                 case "king":
                     if (Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1) {
                         return true; // Move one square in any direction
