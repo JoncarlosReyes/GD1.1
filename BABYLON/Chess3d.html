@@ -130,17 +130,17 @@
             if (piece.name === "pawn") {
                 // Move forward one square
                 if (deltaZ === direction && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z)) {
-                    return true;
+                    return true; // Regular move
                 }
                 // Capture diagonally
                 if (deltaZ === direction && Math.abs(deltaX) === 1 && pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z && p.isWhite !== piece.isWhite)) {
-                    return true;
+                    return true; // Capture move
                 }
                 // Double move from initial position
                 if (piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && (p.position.z === targetTile.position.z - direction))) {
-                    return true;
+                    return true; // Double move
                 }
-                return false; // If none of the conditions are met, it's an invalid move
+                return false; // Invalid move
             }
 
             // Other pieces movement logic
