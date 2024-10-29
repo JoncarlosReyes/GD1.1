@@ -1,19 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Babylon.js Chessboard with STL Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #turnIndicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <button id="exportButton" style="position: absolute; top: 10px; left: 150px;">Export STL</button>
+    <div id="turnIndicator">White's Turn</div>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
+        const turnIndicator = document.getElementById("turnIndicator");
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -31,7 +47,7 @@
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, {size: tileSize}, scene);
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, { size: tileSize }, scene);
                     tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
@@ -47,13 +63,13 @@
         const createPiece = (name, position, color, isWhite) => {
             let piece;
             switch (name) {
-                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.4}, scene); break;
-                case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.6}, scene); break;
-                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 0.6}, scene); break;
-                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene); break;
-                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 0.8}, scene); break;
-                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 0.9}, scene); break;
-                default: piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, { diameter: 0.4 }, scene); break;
+                case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.6 }, scene); break;
+                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.6 }, scene); break;
+                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, { diameter: 0.5, thickness: 0.15 }, scene); break;
+                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.8 }, scene); break;
+                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.9 }, scene); break;
+                default: piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.5 }, scene);
             }
 
             piece.position = position;
@@ -65,7 +81,9 @@
 
             piece.actionManager = new BABYLON.ActionManager(scene);
             piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                selectedPiece = piece;
+                if ((turnWhite && isWhite) || (!turnWhite && !isWhite)) {
+                    selectedPiece = piece;
+                }
             }));
             return piece;
         };
@@ -111,46 +129,40 @@
                         piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
                     );
 
-                    // If there's an opponent's piece, capture it
-                    if (targetPiece) {
-                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
-                            // Move the captured piece out of the board
-                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
-                            console.log(`${targetPiece.name} captured!`);
-                        } else {
-                            console.log("Cannot capture your own piece.");
-                            return; // Can't capture your own piece
-                        }
+                    // If there's an opponent's piece, allow capture
+                    if (targetPiece && targetPiece.isWhite === turnWhite) {
+                        // Cannot capture own piece
+                        return;
                     }
 
-                    // Move the selected piece to the target tile
+                    // Move the selected piece to the picked tile
                     selectedPiece.position = new BABYLON.Vector3(pickedTile.position.x, 0.5, pickedTile.position.z);
-                    selectedPiece = null; // Deselect piece
-                    turnWhite = !turnWhite; // Change turn
+                    selectedPiece = null;
+
+                    // Change turn
+                    turnWhite = !turnWhite;
+                    turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
                 }
             }
         };
 
-        // Export STL functionality
+        // Export to STL functionality
         document.getElementById("exportButton").onclick = () => {
-            const stlData = BABYLON.STLExport.ToSTL(pieces.map(piece => piece));
-            const blob = new Blob([stlData], { type: 'application/octet-stream' });
-            const link = document.createElement("a");
-            link.href = window.URL.createObjectURL(blob);
-            link.download = "chessPieces.stl";
-            link.click();
+            BABYLON.STLExport(exportMeshes);
         };
 
-        // Render loop
+        function exportMeshes() {
+            const meshesToExport = pieces.map(piece => piece);
+            BABYLON.STLExport(meshesToExport, "chessPieces");
+        }
+
         engine.runRenderLoop(() => {
             scene.render();
         });
 
-        // Handle window resize
         window.addEventListener("resize", () => {
             engine.resize();
         });
-
     </script>
 </body>
 </html>
