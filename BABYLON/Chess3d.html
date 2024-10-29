@@ -98,67 +98,66 @@
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
         }
 
-        // Place other pieces for each player
+        // Place rooks
         pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
         pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
         pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
         pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
+        // Place knights
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        // Place bishops
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        // Place queens
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        // Place kings
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
         const isValidMove = (piece, targetTile) => {
             const deltaX = targetTile.position.x - piece.position.x;
             const deltaZ = targetTile.position.z - piece.position.z;
-            const direction = piece.isWhite ? 1 : -1; // White moves up (+1), Black moves down (-1)
-            const initialRow = piece.isWhite ? 1 : 6; // Starting row for pawns
+            const direction = piece.isWhite ? 1 : -1;
+            const initialRow = piece.isWhite ? 1 : 6;
 
-            // Pawn movement logic
             if (piece.name === "pawn") {
-                const isMovingForward = deltaZ === direction;
-                const isCaptureMove = deltaZ === direction && Math.abs(deltaX) === 1;
-                const isDoubleMove = piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0;
-
-                // Regular move (one step forward if no piece in the target tile)
-                if (isMovingForward && deltaX === 0 && !pieces.find(p => p.position.equals(targetTile.position))) {
-                    return true;
-                }
-                // Capture move (diagonal move with opposite color piece on target)
-                if (isCaptureMove && pieces.find(p => p.position.equals(targetTile.position) && p.isWhite !== piece.isWhite)) {
-                    return true;
-                }
-                // Double move from starting row (clear path required)
-                if (isDoubleMove && !pieces.find(p => p.position.equals(targetTile.position))) {
-                    return true;
-                }
-                return false;
+                if (deltaZ === direction && deltaX === 0) return true;
+                if (piece.position.z === initialRow && deltaZ === 2 * direction && deltaX === 0) return true;
             }
 
-            // Other pieces movement logic...
+            return false;
         };
 
-        scene.onPointerDown = (evt) => {
-            const pickInfo = scene.pick(scene.pointerX, scene.pointerY);
-            if (pickInfo.hit) {
-                const pickedTile = pickInfo.pickedMesh;
-
-                if (selectedPiece) {
-                    if (isValidMove(selectedPiece, pickedTile)) {
-                        selectedPiece.position = new BABYLON.Vector3(pickedTile.position.x, 0.5, pickedTile.position.z);
-                        selectedPiece = null;
+        scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN && selectedPiece) {
+                const pickResult = scene.pick(pointerInfo.event.clientX, pointerInfo.event.clientY);
+                if (pickResult.hit) {
+                    const targetTile = pickResult.pickedMesh;
+                    if (isValidMove(selectedPiece, targetTile)) {
+                        selectedPiece.position.x = targetTile.position.x;
+                        selectedPiece.position.z = targetTile.position.z;
                         turnWhite = !turnWhite;
                         turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
-                    } else {
-                        selectedPiece = null;
                     }
-                } else {
-                    const targetPiece = pieces.find(piece => piece.position.equals(pickedTile.position));
-                    if (targetPiece && targetPiece.isWhite === turnWhite) {
-                        return;
-                    }
-                    selectedPiece = targetPiece || null;
+                    selectedPiece = null;
                 }
             }
-        };
+        });
 
-        engine.runRenderLoop(() => scene.render());
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
         window.addEventListener("resize", () => engine.resize());
     </script>
 </body>
