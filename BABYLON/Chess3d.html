@@ -9,6 +9,7 @@
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <div id="turnTimer" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 20px;"></div>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
@@ -26,7 +27,6 @@
             // Chessboard
             const boardSize = 8;
             const tileSize = 1;
-            const tiles = [];
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
@@ -35,20 +35,8 @@
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
-                    tiles.push(tile);
                 }
             }
-
-            const highlightTiles = (isWhiteTurn) => {
-                tiles.forEach((tile, index) => {
-                    const tileMaterial = tile.material;
-                    if (isWhiteTurn) {
-                        tileMaterial.emissiveColor = (index % 2 === 0) ? new BABYLON.Color3(0.9, 0.9, 1) : new BABYLON.Color3(0.7, 0.7, 1);
-                    } else {
-                        tileMaterial.emissiveColor = (index % 2 === 0) ? new BABYLON.Color3(1, 0.9, 0.9) : new BABYLON.Color3(1, 0.7, 0.7);
-                    }
-                });
-            };
 
             return scene;
         };
@@ -76,7 +64,9 @@
 
             piece.actionManager = new BABYLON.ActionManager(scene);
             piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                selectedPiece = piece;
+                if (turnWhite === piece.isWhite && !selectedPiece) {
+                    selectedPiece = piece;
+                }
             }));
             return piece;
         };
@@ -85,35 +75,76 @@
         let selectedPiece = null;
         let turnWhite = true;  // Track whose turn it is
 
-        // Call highlightTiles initially to show the starting player
-        highlightTiles(turnWhite);
+        let turnTime = 30;  // Time limit for each turn (in seconds)
+        let timerInterval = null;
 
-        // Place pawns
+        const startTurnTimer = () => {
+            document.getElementById("turnTimer").innerText = `Time left: ${turnTime} s`;
+            timerInterval = setInterval(() => {
+                turnTime--;
+                document.getElementById("turnTimer").innerText = `Time left: ${turnTime} s`;
+                if (turnTime <= 0) {
+                    clearInterval(timerInterval);
+                    turnWhite = !turnWhite;  // Switch turn on timeout
+                    resetTurnTimer();
+                }
+            }, 1000);
+        };
+
+        const resetTurnTimer = () => {
+            clearInterval(timerInterval);
+            turnTime = 30;
+            startTurnTimer();
+        };
+
+        const piecesLogic = {
+            "pawn": (piece, targetTile) => {
+                const forward = piece.isWhite ? 1 : -1;
+                const validMove = piece.position.z + forward === targetTile.position.z &&
+                                  piece.position.x === targetTile.position.x;
+                return validMove;
+            },
+            "rook": (piece, targetTile) => {
+                return piece.position.x === targetTile.position.x || piece.position.z === targetTile.position.z;
+            },
+            // Define moves for bishop, knight, queen, king
+            "knight": (piece, targetTile) => {
+                const dx = Math.abs(piece.position.x - targetTile.position.x);
+                const dz = Math.abs(piece.position.z - targetTile.position.z);
+                return (dx === 2 && dz === 1) || (dx === 1 && dz === 2);
+            }
+        };
+
+        const isMoveValid = (piece, targetTile) => {
+            if (piecesLogic[piece.name]) {
+                return piecesLogic[piece.name](piece, targetTile);
+            }
+            return false;
+        };
+
+        // Initialize pieces
         for (let i = 0; i < 8; i++) {
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
         }
-
-        // Place other pieces for each player (rooks, knights, bishops, queen, king)...
+        
+        // Other pieces omitted for brevity; add rooks, knights, bishops, queen, king
 
         scene.onPointerDown = (evt, pickResult) => {
-            if (selectedPiece) {
-                const pickedTile = pickResult.pickedMesh;
-                if (pickedTile && pickedTile.name.startsWith("tile")) {
+            const pickedTile = pickResult.pickedMesh;
+            if (selectedPiece && pickedTile && pickedTile.name.startsWith("tile")) {
+                if (isMoveValid(selectedPiece, pickedTile)) {
                     const targetPiece = pieces.find(piece => 
                         piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
                     );
 
-                    if (targetPiece && selectedPiece.isWhite !== targetPiece.isWhite) {
-                        targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
-                    } else if (targetPiece) {
-                        return; // Can't capture your own piece
+                    if (targetPiece && targetPiece.isWhite !== selectedPiece.isWhite) {
+                        targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Capture piece
                     }
-
                     selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
                     selectedPiece = null;
-                    turnWhite = !turnWhite; // Switch turn
-                    highlightTiles(turnWhite); // Update tile highlights
+                    turnWhite = !turnWhite;
+                    resetTurnTimer();
                 }
             }
         };
@@ -122,8 +153,15 @@
             BABYLON.StlExporter.Export(scene, "ChessPieces");
         });
 
-        engine.runRenderLoop(() => scene.render());
-        window.addEventListener("resize", () => engine.resize());
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+
+        startTurnTimer();
     </script>
 </body>
 </html>
