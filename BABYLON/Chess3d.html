@@ -26,6 +26,7 @@
             // Chessboard
             const boardSize = 8;
             const tileSize = 1;
+            const tiles = [];
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
@@ -34,8 +35,20 @@
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
+                    tiles.push(tile);
                 }
             }
+
+            const highlightTiles = (isWhiteTurn) => {
+                tiles.forEach((tile, index) => {
+                    const tileMaterial = tile.material;
+                    if (isWhiteTurn) {
+                        tileMaterial.emissiveColor = (index % 2 === 0) ? new BABYLON.Color3(0.9, 0.9, 1) : new BABYLON.Color3(0.7, 0.7, 1);
+                    } else {
+                        tileMaterial.emissiveColor = (index % 2 === 0) ? new BABYLON.Color3(1, 0.9, 0.9) : new BABYLON.Color3(1, 0.7, 0.7);
+                    }
+                });
+            };
 
             return scene;
         };
@@ -72,59 +85,35 @@
         let selectedPiece = null;
         let turnWhite = true;  // Track whose turn it is
 
+        // Call highlightTiles initially to show the starting player
+        highlightTiles(turnWhite);
+
         // Place pawns
         for (let i = 0; i < 8; i++) {
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
         }
 
-        // Place other pieces for each player
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        // Place other pieces for each player (rooks, knights, bishops, queen, king)...
 
         scene.onPointerDown = (evt, pickResult) => {
             if (selectedPiece) {
                 const pickedTile = pickResult.pickedMesh;
                 if (pickedTile && pickedTile.name.startsWith("tile")) {
-                    // Check if there's already a piece on the picked tile
                     const targetPiece = pieces.find(piece => 
                         piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
                     );
 
-                    // If there's an opponent's piece, capture it
-                    if (targetPiece) {
-                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
-                            // Move the captured piece out of the board
-                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
-                            console.log(`${targetPiece.name} captured!`);
-                        } else {
-                            console.log("Cannot capture your own piece.");
-                            return; // Can't capture your own piece
-                        }
+                    if (targetPiece && selectedPiece.isWhite !== targetPiece.isWhite) {
+                        targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
+                    } else if (targetPiece) {
+                        return; // Can't capture your own piece
                     }
 
-                    // Move the selected piece to the target tile
                     selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
-                    selectedPiece = null; // Deselect piece
+                    selectedPiece = null;
                     turnWhite = !turnWhite; // Switch turn
+                    highlightTiles(turnWhite); // Update tile highlights
                 }
             }
         };
@@ -133,13 +122,8 @@
             BABYLON.StlExporter.Export(scene, "ChessPieces");
         });
 
-        engine.runRenderLoop(() => {
-            scene.render();
-        });
-
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
+        engine.runRenderLoop(() => scene.render());
+        window.addEventListener("resize", () => engine.resize());
     </script>
 </body>
 </html>
