@@ -128,28 +128,22 @@
             const deltaX = targetTile.position.x - piece.position.x;
             const deltaZ = targetTile.position.z - piece.position.z;
             const direction = piece.isWhite ? 1 : -1;
-            const initialRow = piece.isWhite ? 1 : 6;
-
+            const initialRow = piece.isWhite ? 1.5 : -1.5;
             if (piece.name === "pawn") {
-                if (deltaZ === direction && deltaX === 0) return true;
-                if (piece.position.z === initialRow && deltaZ === 2 * direction && deltaX === 0) return true;
+                if (deltaX === 0 && deltaZ === direction) return true;
+                if (deltaX === 0 && deltaZ === 2 * direction && piece.position.z === initialRow) return true;
             }
-
             return false;
         };
 
-        scene.onPointerObservable.add((pointerInfo) => {
-            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN && selectedPiece) {
-                const pickResult = scene.pick(pointerInfo.event.clientX, pointerInfo.event.clientY);
-                if (pickResult.hit) {
-                    const targetTile = pickResult.pickedMesh;
-                    if (isValidMove(selectedPiece, targetTile)) {
-                        selectedPiece.position.x = targetTile.position.x;
-                        selectedPiece.position.z = targetTile.position.z;
-                        turnWhite = !turnWhite;
-                        turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
-                    }
+        scene.onPointerObservable.add((event) => {
+            if (event.type === BABYLON.PointerEventTypes.POINTERPICK && selectedPiece) {
+                const pickedTile = event.pickInfo.pickedMesh;
+                if (pickedTile && isValidMove(selectedPiece, pickedTile)) {
+                    selectedPiece.position = new BABYLON.Vector3(pickedTile.position.x, 0.5, pickedTile.position.z);
                     selectedPiece = null;
+                    turnWhite = !turnWhite;
+                    turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
                 }
             }
         });
@@ -159,6 +153,7 @@
         });
 
         window.addEventListener("resize", () => engine.resize());
+
     </script>
 </body>
 </html>
