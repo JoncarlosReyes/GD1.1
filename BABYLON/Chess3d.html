@@ -126,53 +126,54 @@
 
             switch (piece.name) {
                 case "pawn":
-                    const direction = piece.isWhite ? 1 : -1;
-                    const initialRow = piece.isWhite ? 1 : 6;
-                    // Move forward
-                    if (deltaZ === direction && deltaX === 0) {
+                    const direction = piece.isWhite ? 1 : -1; // White moves up (+1), Black moves down (-1)
+                    const initialRow = piece.isWhite ? 1 : 6; // Starting row for pawns
+
+                    // Move forward one square
+                    if (deltaZ === direction && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z)) {
                         return true;
                     }
-                    // Capture
-                    if (deltaZ === direction && Math.abs(deltaX) === 1) {
-                        return true; // Allow capturing diagonally
+                    // Capture diagonally
+                    if (deltaZ === direction && Math.abs(deltaX) === 1 && pieces.find(p => p.position.x === targetTile.position.x && p.position.z === targetTile.position.z && p.isWhite !== piece.isWhite)) {
+                        return true;
                     }
                     // Double move from initial position
-                    if (piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0) {
+                    if (piece.position.z === initialRow && deltaZ === direction * 2 && deltaX === 0 && !pieces.find(p => p.position.x === targetTile.position.x && (p.position.z === targetTile.position.z - direction))) {
                         return true;
                     }
                     break;
+
                 case "rook":
-                    // Move in straight lines
                     if (deltaX === 0 || deltaZ === 0) {
-                        return true;
+                        return true; // Can move in straight lines
                     }
                     break;
+
                 case "knight":
-                    // L-shaped move
                     if ((Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2)) {
-                        return true;
+                        return true; // L-shaped move
                     }
                     break;
+
                 case "bishop":
-                    // Diagonal moves
                     if (Math.abs(deltaX) === Math.abs(deltaZ)) {
-                        return true;
+                        return true; // Diagonal moves
                     }
                     break;
+
                 case "queen":
-                    // Straight or diagonal moves
                     if (deltaX === 0 || deltaZ === 0 || Math.abs(deltaX) === Math.abs(deltaZ)) {
-                        return true;
+                        return true; // Straight or diagonal moves
                     }
                     break;
+
                 case "king":
-                    // Move one square in any direction
                     if (Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1) {
-                        return true;
+                        return true; // Move one square in any direction
                     }
                     break;
             }
-            return false;
+            return false; // If none of the conditions are met, it's an invalid move
         };
 
         scene.onPointerDown = (evt) => {
