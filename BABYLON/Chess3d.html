@@ -75,12 +75,12 @@
         const createPiece = (name, position, color, isWhite) => {
             let piece;
             switch (name) {
-                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, { diameter: 0.4 }, scene); break;
+                case "pawn": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.4, height: 0.6 }, scene); break;
                 case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.6 }, scene); break;
-                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.6 }, scene); break;
-                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, { diameter: 0.5, thickness: 0.15 }, scene); break;
-                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.8 }, scene); break;
-                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.9 }, scene); break;
+                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.8 }, scene); break;
+                case "bishop": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.7 }, scene); break;
+                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 1 }, scene); break;
+                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 1.2 }, scene); break;
                 default: piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.5 }, scene);
             }
 
@@ -135,35 +135,35 @@
         const setupPieces = () => {
             // Place pawns
             for (let i = 0; i < 8; i++) {
-                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
-                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
+                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.3, 1.5), new BABYLON.Color3(1, 1, 1), true));
+                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.3, -1.5), new BABYLON.Color3(0, 0, 0), false));
             }
 
             // Place rooks
-            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
             // Place knights
-            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
             // Place bishops
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
             // Place queens
-            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
             // Place kings
-            pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.3, 3.5), new BABYLON.Color3(1, 1, 1), true));
+            pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.3, -3.5), new BABYLON.Color3(0, 0, 0), false));
         };
 
         // Game initialization
@@ -181,10 +181,11 @@
                     const validMove = validateMove(selectedPiece, targetRow, targetCol);
                     
                     if (validMove) {
-                        selectedPiece.position = new BABYLON.Vector3(targetRow - 3.5, 0.5, targetCol - 3.5);
+                        selectedPiece.position = new BABYLON.Vector3(targetRow - 3.5, 0.3, targetCol - 3.5);
                         selectedPiece = null;
                         turnWhite = !turnWhite;
                         turnIndicator.textContent = turnWhite ? "White's Turn" : "Black's Turn";
+                        startTimer(); // Restart timer after a move
                     } else {
                         alert("Invalid Move!");
                         selectedPiece = null; // Deselect piece if the move is invalid
@@ -207,9 +208,44 @@
                 if (colDiff === 0 && rowDiff === direction && !isOccupied(targetRow, targetCol)) return true; // Move forward
                 if (Math.abs(colDiff) === 1 && rowDiff === direction && isOccupied(targetRow, targetCol, piece.isWhite)) return true; // Capture
             }
+
             // Implement additional piece movement rules here
-            // ...
-            return false;
+            // Rook
+            if (piece.name === "rook") {
+                if (rowDiff === 0 || colDiff === 0) {
+                    return !isOccupiedBetween(currentRow, currentCol, targetRow, targetCol, piece.isWhite);
+                }
+            }
+
+            // Knight
+            if (piece.name === "knight") {
+                if ((Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2)) {
+                    return !isOccupied(targetRow, targetCol, piece.isWhite);
+                }
+            }
+
+            // Bishop
+            if (piece.name === "bishop") {
+                if (Math.abs(rowDiff) === Math.abs(colDiff)) {
+                    return !isOccupiedBetween(currentRow, currentCol, targetRow, targetCol, piece.isWhite);
+                }
+            }
+
+            // Queen
+            if (piece.name === "queen") {
+                if (Math.abs(rowDiff) === Math.abs(colDiff) || rowDiff === 0 || colDiff === 0) {
+                    return !isOccupiedBetween(currentRow, currentCol, targetRow, targetCol, piece.isWhite);
+                }
+            }
+
+            // King
+            if (piece.name === "king") {
+                if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
+                    return !isOccupied(targetRow, targetCol, piece.isWhite);
+                }
+            }
+
+            return false; // Move not valid for this piece
         };
 
         const isOccupied = (row, col, isWhite = null) => {
@@ -222,6 +258,20 @@
                 }
                 return false;
             });
+        };
+
+        const isOccupiedBetween = (startRow, startCol, targetRow, targetCol, isWhite) => {
+            const rowIncrement = Math.sign(targetRow - startRow);
+            const colIncrement = Math.sign(targetCol - startCol);
+            let currentRow = startRow + rowIncrement;
+            let currentCol = startCol + colIncrement;
+
+            while (currentRow !== targetRow || currentCol !== targetCol) {
+                if (isOccupied(currentRow, currentCol, isWhite)) return true;
+                currentRow += rowIncrement;
+                currentCol += colIncrement;
+            }
+            return false;
         };
 
         engine.runRenderLoop(() => {
