@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Babylon.js Chessboard with STL Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
@@ -9,7 +11,6 @@
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
-    <div id="turnTimer" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 20px;"></div>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
@@ -64,9 +65,7 @@
 
             piece.actionManager = new BABYLON.ActionManager(scene);
             piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                if (turnWhite === piece.isWhite && !selectedPiece) {
-                    selectedPiece = piece;
-                }
+                selectedPiece = piece;
             }));
             return piece;
         };
@@ -75,93 +74,83 @@
         let selectedPiece = null;
         let turnWhite = true;  // Track whose turn it is
 
-        let turnTime = 30;  // Time limit for each turn (in seconds)
-        let timerInterval = null;
-
-        const startTurnTimer = () => {
-            document.getElementById("turnTimer").innerText = `Time left: ${turnTime} s`;
-            timerInterval = setInterval(() => {
-                turnTime--;
-                document.getElementById("turnTimer").innerText = `Time left: ${turnTime} s`;
-                if (turnTime <= 0) {
-                    clearInterval(timerInterval);
-                    turnWhite = !turnWhite;  // Switch turn on timeout
-                    resetTurnTimer();
-                }
-            }, 1000);
-        };
-
-        const resetTurnTimer = () => {
-            clearInterval(timerInterval);
-            turnTime = 30;
-            startTurnTimer();
-        };
-
-        const piecesLogic = {
-            "pawn": (piece, targetTile) => {
-                const forward = piece.isWhite ? 1 : -1;
-                const validMove = piece.position.z + forward === targetTile.position.z &&
-                                  piece.position.x === targetTile.position.x;
-                return validMove;
-            },
-            "rook": (piece, targetTile) => {
-                return piece.position.x === targetTile.position.x || piece.position.z === targetTile.position.z;
-            },
-            // Define moves for bishop, knight, queen, king
-            "knight": (piece, targetTile) => {
-                const dx = Math.abs(piece.position.x - targetTile.position.x);
-                const dz = Math.abs(piece.position.z - targetTile.position.z);
-                return (dx === 2 && dz === 1) || (dx === 1 && dz === 2);
-            }
-        };
-
-        const isMoveValid = (piece, targetTile) => {
-            if (piecesLogic[piece.name]) {
-                return piecesLogic[piece.name](piece, targetTile);
-            }
-            return false;
-        };
-
-        // Initialize pieces
+        // Place pawns
         for (let i = 0; i < 8; i++) {
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
         }
-        
-        // Other pieces omitted for brevity; add rooks, knights, bishops, queen, king
+
+        // Place other pieces for each player
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
 
         scene.onPointerDown = (evt, pickResult) => {
-            const pickedTile = pickResult.pickedMesh;
-            if (selectedPiece && pickedTile && pickedTile.name.startsWith("tile")) {
-                if (isMoveValid(selectedPiece, pickedTile)) {
+            if (selectedPiece) {
+                const pickedTile = pickResult.pickedMesh;
+                if (pickedTile && pickedTile.name.startsWith("tile")) {
+                    // Check if there's already a piece on the picked tile
                     const targetPiece = pieces.find(piece => 
                         piece.position.x === pickedTile.position.x && piece.position.z === pickedTile.position.z
                     );
 
-                    if (targetPiece && targetPiece.isWhite !== selectedPiece.isWhite) {
-                        targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Capture piece
+                    // If there's an opponent's piece, capture it
+                    if (targetPiece) {
+                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
+                            // Move the captured piece out of the board
+                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
+                            console.log(`${targetPiece.name} captured!`);
+                        } else {
+                            console.log("Cannot capture your own piece.");
+                            return; // Can't capture your own piece
+                        }
                     }
-                    selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
-                    selectedPiece = null;
-                    turnWhite = !turnWhite;
-                    resetTurnTimer();
+
+                    // Move the selected piece to the target tile
+                    selectedPiece.position = new BABYLON.Vector3(pickedTile.position.x, 0.5, pickedTile.position.z);
+                    selectedPiece = null; // Deselect piece
+                    turnWhite = !turnWhite; // Change turn
                 }
             }
         };
 
-        document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.StlExporter.Export(scene, "ChessPieces");
-        });
+        // Export STL functionality
+        document.getElementById("exportButton").onclick = () => {
+            const stlData = BABYLON.STLExport.ToSTL(pieces.map(piece => piece));
+            const blob = new Blob([stlData], { type: 'application/octet-stream' });
+            const link = document.createElement("a");
+            link.href = window.URL.createObjectURL(blob);
+            link.download = "chessPieces.stl";
+            link.click();
+        };
 
+        // Render loop
         engine.runRenderLoop(() => {
             scene.render();
         });
 
+        // Handle window resize
         window.addEventListener("resize", () => {
             engine.resize();
         });
 
-        startTurnTimer();
     </script>
 </body>
 </html>
