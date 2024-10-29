@@ -123,7 +123,7 @@
         const isValidMove = (piece, targetTile) => {
             const deltaX = targetTile.position.x - piece.position.x;
             const deltaZ = targetTile.position.z - piece.position.z;
-            const direction = piece.isWhite ? 1 : -1; // White moves up (+1), Black moves down (-1)
+            const direction = piece.isWhite ? 1 : -1; // 1 for white, -1 for black
             const initialRow = piece.isWhite ? 1 : 6; // Starting row for pawns
 
             // Pawn movement logic
