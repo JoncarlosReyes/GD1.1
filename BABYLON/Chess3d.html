@@ -1,41 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Babylon.js Chessboard with Piece Movement Rules</title>
+    <title>Babylon.js Chessboard with STL Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        #turnIndicator {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 24px;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 150px;">Export STL</button>
-    <div id="turnIndicator">White's Turn</div>
+    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <div id="turnIndicator" style="position: absolute; top: 10px; left: 120px; font-size: 20px;">Turn: White</div>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
-        const turnIndicator = document.getElementById("turnIndicator");
+        let currentTurn = "white"; // Track whose turn it is
+        const occupiedTiles = {}; // Track occupied tiles by color
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
 
             // Camera
-            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 20, BABYLON.Vector3.Zero(), scene);
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
             camera.attachControl(canvas, true);
 
             // Light
@@ -47,10 +32,10 @@
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, { size: tileSize }, scene);
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, {size: tileSize}, scene);
                     tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
-                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
+                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(4, 7, 1) : new BABYLON.Color3(0.3, 0.2, 0.4);
                     tile.material = tileMaterial;
                 }
             }
@@ -59,157 +44,363 @@
         };
 
         const scene = createScene();
-
-        const createPiece = (name, position, color, isWhite) => {
+        
+        const createPiece = (name, position, color) => {
             let piece;
             switch (name) {
-                case "pawn": piece = BABYLON.MeshBuilder.CreateSphere(name, { diameter: 0.4 }, scene); break;
-                case "rook": piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.6 }, scene); break;
-                case "knight": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.5, height: 0.6 }, scene); break;
-                case "bishop": piece = BABYLON.MeshBuilder.CreateTorus(name, { diameter: 0.5, thickness: 0.15 }, scene); break;
-                case "queen": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.8 }, scene); break;
-                case "king": piece = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: 0.6, height: 0.9 }, scene); break;
-                default: piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.5 }, scene);
+                case "pawn":
+                    piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.5}, scene);
+                    break;
+                case "rook":
+                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+                    break;
+                case "knight":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
+                    break;
+                case "bishop":
+                    piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene);
+                    break;
+                case "queen":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.2}, scene);
+                    break;
+                case "king":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.3}, scene);
+                    break;
+                default:
+                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
             }
 
             piece.position = position;
             const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
             pieceMaterial.diffuseColor = color;
             piece.material = pieceMaterial;
-            piece.isWhite = isWhite;
-            piece.name = name;
 
             piece.actionManager = new BABYLON.ActionManager(scene);
             piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                if ((turnWhite && isWhite) || (!turnWhite && !isWhite)) {
-                    selectedPiece = piece;
+                if ((currentTurn === "white" && color.r === 1) || (currentTurn === "black" && color.r === 0)) {
+                    selectedPiece = piece; // Only select if it's the player's turn
                 }
             }));
+
+            // Add the piece to the occupied tiles
+            occupiedTiles[position.x + '_' + position.z] = color;
+
             return piece;
         };
 
         const pieces = [];
-        let selectedPiece = null;
-        let turnWhite = true;
-
         // Place pawns
         for (let i = 0; i < 8; i++) {
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), new BABYLON.Color3(0, 0, 0), false));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 2.5), new BABYLON.Color3(1, 1, 1)));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2.5), new BABYLON.Color3(0, 0, 0)));
         }
 
         // Place rooks
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
 
         // Place knights
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
 
         // Place bishops
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
 
         // Place queens
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
 
         // Place kings
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1), true));
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0), false));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
 
-        const isValidMove = (piece, targetTile) => {
-            const deltaX = targetTile.position.x - piece.position.x;
-            const deltaZ = targetTile.position.z - piece.position.z;
-            const direction = piece.isWhite ? 1 : -1;
-            const initialRow = piece.isWhite ? 1 : 6;
+        let selectedPiece = null;
 
-            // Check movement rules based on piece type
-            switch (piece.name) {
-                case "pawn":
-                    // Move forward one square or two squares if at starting position
-                    if (deltaZ === direction && deltaX === 0) {
-                        return true;
-                    }
-                    if (piece.position.z === initialRow + 0.5 && deltaZ === direction * 2 && deltaX === 0) {
-                        return true;
-                    }
-                    // Capture move
-                    if (deltaZ === direction && Math.abs(deltaX) === 1) {
-                        return true;
-                    }
-                    break;
+        scene.onPointerDown = (evt, pickResult) => {
+            
+        if (selectedPiece) {
+                const pickedTile = pickResult.pickedMesh;
+                if (pickedTile && pickedTile.name.startsWith("tile")) {
+                    const deltaX = Math.abs(pickedTile.position.x - selectedPiece.position.x);
+                    const deltaZ = pickedTile.position.z - selectedPiece.position.z; // Retain sign to check direction
+                    const targetKey = `${pickedTile.position.x}_${pickedTile.position.z}`;
+                    const targetPieceColor = occupiedTiles[targetKey];
+                    const isOpponentPiece = targetPieceColor &&
+                        ((selectedPiece.material.diffuseColor.r === 1 && targetPieceColor.r === 0) || 
+                        (selectedPiece.material.diffuseColor.r === 0 && targetPieceColor.r === 1));
 
-                case "rook":
-                    // Rook can move any number of squares along a row or column
-                    if (deltaX === 0 || deltaZ === 0) {
-                        return true;
-                    }
-                    break;
+                    let validMove = false;
+                    
+                    ///logic of the pawn movement 
+                    if (selectedPiece.name === "pawn") {
+                        const maxMoveDistance = selectedPiece.hasMoved ? 1 : 2;
 
-                case "knight":
-                    // Knight moves in an "L" shape
-                    if ((Math.abs(deltaX) === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2)) {
-                        return true;
-                    }
-                    break;
+                        // Determine if move is forward based on pawn color
+                        const isForwardMove = (selectedPiece.material.diffuseColor.r === 1 && deltaZ < 0) ||  // White pawn moves forward (negative Z)
+                                            (selectedPiece.material.diffuseColor.r === 0 && deltaZ > 0);   // Black pawn moves forward (positive Z)
 
-                case "bishop":
-                    // Bishop moves diagonally
-                    if (Math.abs(deltaX) === Math.abs(deltaZ)) {
-                        return true;
-                    }
-                    break;
+                        // Check if tile in front is empty for forward movement
+                        const targetKey = `${pickedTile.position.x}_${pickedTile.position.z}`;
+                        const isPathClear = !occupiedTiles[targetKey];
 
-                case "queen":
-                    // Queen can move any number of squares along a row, column, or diagonal
-                    if (deltaX === 0 || deltaZ === 0 || Math.abs(deltaX) === Math.abs(deltaZ)) {
-                        return true;
-                    }
-                    break;
+                        // Capture conditions
+                        const isDiagonalMove = deltaX === 1 && Math.abs(deltaZ) === 1; // Only diagonal moves by 1 tile
+                        const targetPieceColor = occupiedTiles[targetKey];
 
-                case "king":
-                    // King moves one square in any direction
-                    if (Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1) {
-                        return true;
-                    }
-                    break;
-            }
-            return false;
-        };
+                        // Determine if the target piece is an opponent piece
+                        const isOpponentPiece = targetPieceColor &&
+                            ((selectedPiece.material.diffuseColor.r === 1 && targetPieceColor.r === 0) || 
+                            (selectedPiece.material.diffuseColor.r === 0 && targetPieceColor.r === 1));
 
-        const onTileClick = (tile) => {
-            if (selectedPiece) {
-                if (isValidMove(selectedPiece, tile)) {
-                    selectedPiece.position = new BABYLON.Vector3(tile.position.x, 0.5, tile.position.z);
-                    turnWhite = !turnWhite; // Change turn
-                    turnIndicator.textContent = turnWhite ? "White's Turn" : "Black's Turn";
-                    selectedPiece = null; // Deselect piece
+                        // Forward move if path is clear
+                        if (isForwardMove && deltaX === 0 && Math.abs(deltaZ) <= maxMoveDistance && isPathClear) {
+                            selectedPiece.position.x = pickedTile.position.x;
+                            selectedPiece.position.z = pickedTile.position.z;
+                            selectedPiece.hasMoved = true;
+
+                            // Update occupied tiles
+                            delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                            occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                            // Switch turn
+                            currentTurn = currentTurn === "white" ? "black" : "white";
+                            document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                            selectedPiece = null; // Deselect the piece
+
+                        // Capture move if opponent piece is on diagonal tile
+                        } else if (isForwardMove && isDiagonalMove && isOpponentPiece) {
+                            selectedPiece.position.x = pickedTile.position.x;
+                            selectedPiece.position.z = pickedTile.position.z;
+                            selectedPiece.hasMoved = true;
+
+                            // Capture opponent piece
+                            const capturedPiece = pieces.find(p => p.position.x === pickedTile.position.x && p.position.z === pickedTile.position.z);
+                            if (capturedPiece) {
+                                capturedPiece.dispose(); // Remove the captured piece from the scene
+                            }
+
+                            // Update occupied tiles
+                            delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                            occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                            // Switch turn
+                            currentTurn = currentTurn === "white" ? "black" : "white";
+                            document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                            selectedPiece = null; // Deselect the piece
+                        }
+                    } 
+                    ///Logic of the knight movement
+                    else if (selectedPiece.name === "knight") {
+                        // Knights move in an L-shape: 2 steps in one direction, 1 step in the other
+                        validMove = (deltaX === 2 && Math.abs(deltaZ) === 1) || (Math.abs(deltaX) === 1 && Math.abs(deltaZ) === 2);
+                        
+                        if (validMove) {
+                            // Move the knight
+                            selectedPiece.position.x = pickedTile.position.x;
+                            selectedPiece.position.z = pickedTile.position.z;
+
+                            // Update occupied tiles
+                            delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                            occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                            // Switch turn
+                            currentTurn = currentTurn === "white" ? "black" : "white";
+                            document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                            selectedPiece = null; // Deselect the piece
+                        }
+                    }
+
+
+                    else if (selectedPiece.name === "rook") {
+                        // Rooks move in straight lines along either the X or Z axis
+                        if ((deltaX === 0 && deltaZ !== 0) || (deltaX !== 0 && deltaZ === 0)) {
+                            // Check if the path is clear
+                            let pathClear = true;
+                            const stepX = deltaX === 0 ? 0 : (pickedTile.position.x > selectedPiece.position.x ? 1 : -1);
+                            const stepZ = deltaZ === 0 ? 0 : (pickedTile.position.z > selectedPiece.position.z ? 1 : -1);
+                            let currentX = selectedPiece.position.x + stepX;
+                            let currentZ = selectedPiece.position.z + stepZ;
+
+                            while ((currentX !== pickedTile.position.x || currentZ !== pickedTile.position.z) && pathClear) {
+                                if (occupiedTiles[`${currentX}_${currentZ}`]) {
+                                    pathClear = false;
+                                }
+                                currentX += stepX;
+                                currentZ += stepZ;
+                            }
+
+                            // If the path is clear, move the rook
+                            if (pathClear) {
+                                selectedPiece.position.x = pickedTile.position.x;
+                                selectedPiece.position.z = pickedTile.position.z;
+
+                                // Update occupied tiles
+                                delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                                occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                                // Switch turn
+                                currentTurn = currentTurn === "white" ? "black" : "white";
+                                document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                                selectedPiece = null; // Deselect the piece
+                            }
+                        }
+                    }
+
+                    else if (selectedPiece.name === "bishop") {
+                        // Check if move is a valid diagonal move
+                        if (Math.abs(deltaX) === Math.abs(deltaZ)) {
+                            let pathClear = true;
+
+                            // Calculate the step direction for both X and Z
+                            const stepX = (pickedTile.position.x > selectedPiece.position.x) ? 1 : -1;
+                            const stepZ = (pickedTile.position.z > selectedPiece.position.z) ? 1 : -1;
+
+                            // Start at the position next to the selected piece and check each tile along the diagonal
+                            let currentX = selectedPiece.position.x + stepX;
+                            let currentZ = selectedPiece.position.z + stepZ;
+
+                            while (currentX !== pickedTile.position.x && currentZ !== pickedTile.position.z) {
+                                const positionKey = `${currentX}_${currentZ}`;
+                                
+                                // Check if the tile is occupied; if so, path is blocked
+                                if (occupiedTiles[positionKey]) {
+                                    pathClear = false;
+                                    break;
+                                }
+
+                                // Move one step further along the diagonal path
+                                currentX += stepX;
+                                currentZ += stepZ;
+                            }
+
+                            // If path is clear, execute the move
+                            if (pathClear) {
+                                // Capture logic if there's an opponent piece on the target tile
+                                const targetPieceColor = occupiedTiles[targetKey];
+                                const isOpponentPiece = targetPieceColor &&
+                                    ((selectedPiece.material.diffuseColor.r === 1 && targetPieceColor.r === 0) || 
+                                    (selectedPiece.material.diffuseColor.r === 0 && targetPieceColor.r === 1));
+                                
+                                if (!targetPieceColor || isOpponentPiece) {
+                                    selectedPiece.position.x = pickedTile.position.x;
+                                    selectedPiece.position.z = pickedTile.position.z;
+
+                                    // Capture opponent piece if present
+                                    if (isOpponentPiece) {
+                                        const capturedPiece = pieces.find(p => p.position.x === pickedTile.position.x && p.position.z === pickedTile.position.z);
+                                        if (capturedPiece) capturedPiece.dispose();
+                                    }
+
+                                    // Update occupied tiles
+                                    delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                                    occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                                    // Switch turn
+                                    currentTurn = currentTurn === "white" ? "black" : "white";
+                                    document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                                    selectedPiece = null; // Deselect the piece
+                                }
+                            }
+                        }
+                    }
+
+                    else if (selectedPiece.name === "king") {
+                        // King moves one square in any direction
+                        validMove = Math.abs(deltaX) <= 1 && Math.abs(deltaZ) <= 1;
+
+                        if (validMove) {
+                            // Move the king
+                            selectedPiece.position.x = pickedTile.position.x;
+                            selectedPiece.position.z = pickedTile.position.z;
+
+                            // Update occupied tiles
+                            delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                            occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                            // Switch turn
+                            currentTurn = currentTurn === "white" ? "black" : "white";
+                            document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                            selectedPiece = null; // Deselect the piece
+                        }
+                    }
+
+                    else if (selectedPiece.name === "queen") {
+                        // Queen moves like both a rook and a bishop
+                        let pathClear = true;
+
+                        if ((deltaX === 0 && deltaZ !== 0) || (deltaX !== 0 && deltaZ === 0)) {
+                            // Rook-like movement
+                            const stepX = deltaX === 0 ? 0 : (pickedTile.position.x > selectedPiece.position.x ? 1 : -1);
+                            const stepZ = deltaZ === 0 ? 0 : (pickedTile.position.z > selectedPiece.position.z ? 1 : -1);
+                            let currentX = selectedPiece.position.x + stepX;
+                            let currentZ = selectedPiece.position.z + stepZ;
+
+                            while ((currentX !== pickedTile.position.x || currentZ !== pickedTile.position.z) && pathClear) {
+                                if (occupiedTiles[`${currentX}_${currentZ}`]) {
+                                    pathClear = false;
+                                }
+                                currentX += stepX;
+                                currentZ += stepZ;
+                            }
+                        } 
+                        else if (Math.abs(deltaX) === Math.abs(deltaZ)) {
+                            // Bishop-like movement
+                            const stepX = pickedTile.position.x > selectedPiece.position.x ? 1 : -1;
+                            const stepZ = pickedTile.position.z > selectedPiece.position.z ? 1 : -1;
+                            let currentX = selectedPiece.position.x + stepX;
+                            let currentZ = selectedPiece.position.z + stepZ;
+
+                            while ((currentX !== pickedTile.position.x || currentZ !== pickedTile.position.z) && pathClear) {
+                                if (occupiedTiles[`${currentX}_${currentZ}`]) {
+                                    pathClear = false;
+                                }
+                                currentX += stepX;
+                                currentZ += stepZ;
+                            }
+                        } else {
+                            pathClear = false; // Invalid move for queen
+                        }
+
+                        // Move the queen if path is clear
+                        if (pathClear) {
+                            selectedPiece.position.x = pickedTile.position.x;
+                            selectedPiece.position.z = pickedTile.position.z;
+
+                            // Update occupied tiles
+                            delete occupiedTiles[`${selectedPiece.position.x}_${selectedPiece.position.z}`];
+                            occupiedTiles[targetKey] = selectedPiece.material.diffuseColor;
+
+                            // Switch turn
+                            currentTurn = currentTurn === "white" ? "black" : "white";
+                            document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
+                            selectedPiece = null; // Deselect the piece
+                        }
+                    }
+                    else {
+                        
+                    }
                 }
             }
         };
 
-        // Add click event to each tile
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const tile = scene.getMeshByName(`tile${row}_${col}`);
-                tile.actionManager = new BABYLON.ActionManager(scene);
-                tile.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                    onTileClick(tile);
-                }));
-            }
-        }
-
-        // Export STL button
-        document.getElementById("exportButton").onclick = () => {
-            BABYLON.STLExport.StlExport(scene, "chessboard");
-        };
+        document.getElementById("exportButton").addEventListener("click", () => {
+            pieces.forEach(piece => {
+                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
+                const blob = new Blob([stlString], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${piece.name}.stl`;
+                link.click();
+            });
+        });
 
         engine.runRenderLoop(() => {
             scene.render();
