@@ -9,6 +9,9 @@
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <div id="turnIndicator" style="position: absolute; top: 10px; right: 10px; font-size: 20px; color: white;">
+        White's Turn
+    </div>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
@@ -72,6 +75,12 @@
         let selectedPiece = null;
         let turnWhite = true;  // Track whose turn it is
 
+        // Update the turn indicator text
+        const turnIndicator = document.getElementById("turnIndicator");
+        const updateTurnIndicator = () => {
+            turnIndicator.innerText = turnWhite ? "White's Turn" : "Black's Turn";
+        };
+
         // Place pawns
         for (let i = 0; i < 8; i++) {
             pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), new BABYLON.Color3(1, 1, 1), true));
@@ -110,36 +119,28 @@
                     );
 
                     // If there's an opponent's piece, capture it
-                    if (targetPiece) {
-                        if (selectedPiece.isWhite !== targetPiece.isWhite) {
-                            // Move the captured piece out of the board
-                            targetPiece.position = new BABYLON.Vector3(10, -1, 10); // Move it out of view
-                            console.log(`${targetPiece.name} captured!`);
-                        } else {
-                            console.log("Cannot capture your own piece.");
-                            return; // Can't capture your own piece
-                        }
+                    if (targetPiece && targetPiece.isWhite !== turnWhite) {
+                        targetPiece.dispose();  // Remove the captured piece
+                        pieces.splice(pieces.indexOf(targetPiece), 1);
                     }
 
-                    // Move the selected piece to the target tile
-                    selectedPiece.position = pickedTile.position.add(new BABYLON.Vector3(0, 0.5, 0));
-                    selectedPiece = null; // Deselect piece
-                    turnWhite = !turnWhite; // Switch turn
+                    selectedPiece.position = pickedTile.position.clone(); // Move to selected tile
+                    turnWhite = !turnWhite; // Switch turns
+                    updateTurnIndicator();  // Update the turn display
+                    selectedPiece = null;
                 }
             }
         };
 
         document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.StlExporter.Export(scene, "ChessPieces");
+            const exporter = new BABYLON.STLExporter();
+            exporter.downloadMeshes(pieces, "chessboard.stl", { isBinary: true });
         });
 
-        engine.runRenderLoop(() => {
-            scene.render();
-        });
+        engine.runRenderLoop(() => scene.render());
+        window.addEventListener("resize", () => engine.resize());
 
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
+        return scene;
     </script>
 </body>
 </html>
