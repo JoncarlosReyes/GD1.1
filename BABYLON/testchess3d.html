@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Babylon.js Chessboard</title>
+    <title>Babylon.js Chessboard with STL Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
+    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
@@ -40,53 +42,101 @@
 
         const scene = createScene();
 
-        const addChessPieces = (scene) => {
-            const pieceMaterialWhite = new BABYLON.StandardMaterial("pieceMatWhite", scene);
-            pieceMaterialWhite.diffuseColor = new BABYLON.Color3(1, 1, 1);
-            
-            const pieceMaterialBlack = new BABYLON.StandardMaterial("pieceMatBlack", scene);
-            pieceMaterialBlack.diffuseColor = new BABYLON.Color3(0, 0, 0);
-
-            const createPiece = (name, position, colorMaterial) => {
-                const piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
-                piece.position = position;
-                piece.material = colorMaterial;
-            };
-
-            // Place pawns
-            for (let i = 0; i < 8; i++) {
-                createPiece(`whitePawn${i}`, new BABYLON.Vector3(i - 3.5, 0.5, 1.5), pieceMaterialWhite);
-                createPiece(`blackPawn${i}`, new BABYLON.Vector3(i - 3.5, 0.5, -1.5), pieceMaterialBlack);
+        const createPiece = (name, position, color) => {
+            let piece;
+            switch (name) {
+                case "pawn":
+                    piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.5}, scene);
+                    break;
+                case "rook":
+                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+                    break;
+                case "knight":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
+                    break;
+                case "bishop":
+                    piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene);
+                    break;
+                case "queen":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.2}, scene);
+                    break;
+                case "king":
+                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.3}, scene);
+                    break;
+                default:
+                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
             }
 
-            // Place rooks
-            createPiece("whiteRook1", new BABYLON.Vector3(-3.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteRook2", new BABYLON.Vector3(3.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackRook1", new BABYLON.Vector3(-3.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackRook2", new BABYLON.Vector3(3.5, 0.5, -3.5), pieceMaterialBlack);
+            piece.position = position;
+            const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
+            pieceMaterial.diffuseColor = color;
+            piece.material = pieceMaterial;
 
-            // Place knights
-            createPiece("whiteKnight1", new BABYLON.Vector3(-2.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteKnight2", new BABYLON.Vector3(2.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackKnight1", new BABYLON.Vector3(-2.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackKnight2", new BABYLON.Vector3(2.5, 0.5, -3.5), pieceMaterialBlack);
+            piece.actionManager = new BABYLON.ActionManager(scene);
+            piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                selectedPiece = piece;
+            }));
 
-            // Place bishops
-            createPiece("whiteBishop1", new BABYLON.Vector3(-1.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("whiteBishop2", new BABYLON.Vector3(1.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackBishop1", new BABYLON.Vector3(-1.5, 0.5, -3.5), pieceMaterialBlack);
-            createPiece("blackBishop2", new BABYLON.Vector3(1.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place queens
-            createPiece("whiteQueen", new BABYLON.Vector3(-0.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackQueen", new BABYLON.Vector3(-0.5, 0.5, -3.5), pieceMaterialBlack);
-
-            // Place kings
-            createPiece("whiteKing", new BABYLON.Vector3(0.5, 0.5, 3.5), pieceMaterialWhite);
-            createPiece("blackKing", new BABYLON.Vector3(0.5, 0.5, -3.5), pieceMaterialBlack);
+            return piece;
         };
 
-        addChessPieces(scene);
+        const pieces = [];
+        // Place pawns
+        for (let i = 0; i < 8; i++) {
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 0.5), new BABYLON.Color3(1, 1, 1)));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -0.5), new BABYLON.Color3(0, 0, 0)));
+        }
+
+        // Place rooks
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+
+        // Place knights
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+
+        // Place bishops
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+
+        // Place queens
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+
+        // Place kings
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
+
+        let selectedPiece = null;
+
+        scene.onPointerDown = (evt, pickResult) => {
+            if (selectedPiece) {
+                const pickedTile = pickResult.pickedMesh;
+                if (pickedTile && pickedTile.name.startsWith("tile")) {
+                    selectedPiece.position.x = pickedTile.position.x;
+                    selectedPiece.position.z = pickedTile.position.z;
+                    selectedPiece = null;
+                }
+            }
+        };
+
+        document.getElementById("exportButton").addEventListener("click", () => {
+            pieces.forEach(piece => {
+                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
+                const blob = new Blob([stlString], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${piece.name}.stl`;
+                link.click();
+            });
+        });
 
         engine.runRenderLoop(() => {
             scene.render();
