@@ -1,151 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Babylon.js Chessboard with STL Export and Movement</title>
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Babylon.js Chess Game</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <canvas id="renderCanvas"></canvas>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.js"></script>
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
-        let selectedPiece = null;
+        const scene = new BABYLON.Scene(engine);
+        
+        // Load the chess pieces
+        const pieces = {};
+        const pieceNames = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
 
-        const createScene = () => {
-            const scene = new BABYLON.Scene(engine);
-
-            // Camera
-            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
-            camera.attachControl(canvas, true);
-
-            // Light
-            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-
-            // Chessboard
-            const boardSize = 8;
-            const tileSize = 1;
-
-            // Create chessboard tiles
-            for (let row = 0; row < boardSize; row++) {
-                for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, {size: tileSize}, scene);
-                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
-                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
-                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
-                    tile.material = tileMaterial;
-                }
-            }
-
-            return scene;
-        };
-
-        const scene = createScene();
-
-        const createPiece = (name, position, color) => {
-            let piece;
-            switch (name) {
-                case "pawn":
-                    piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.5}, scene);
-                    break;
-                case "rook":
-                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
-                    break;
-                case "knight":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
-                    break;
-                case "bishop":
-                    piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene);
-                    break;
-                case "queen":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.2}, scene);
-                    break;
-                case "king":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.3}, scene);
-                    break;
-                default:
-                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
-            }
-
-            piece.position = position;
-            const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
-            pieceMaterial.diffuseColor = color;
-            piece.material = pieceMaterial;
-
-            // Register click action to select the piece
-            piece.actionManager = new BABYLON.ActionManager(scene);
-            piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                selectedPiece = piece;
-            }));
-
-            return piece;
-        };
-
-        const pieces = [];
-        // Place pawns
-        for (let i = 0; i < 8; i++) {
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 0.5), new BABYLON.Color3(1, 1, 1)));
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -0.5), new BABYLON.Color3(0, 0, 0)));
-        }
-
-        // Place rooks
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-
-        // Place knights
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-
-        // Place bishops
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-
-        // Place queens
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-
-        // Place kings
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
-        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0, 0, 0)));
-
-        // Handle piece movement
-        scene.onPointerDown = (evt, pickResult) => {
-            if (selectedPiece) {
-                const pickedTile = pickResult.pickedMesh;
-                if (pickedTile && pickedTile.name.startsWith("tile")) {
-                    // Move selected piece to the clicked tile
-                    selectedPiece.position.x = pickedTile.position.x;
-                    selectedPiece.position.z = pickedTile.position.z;
-                    selectedPiece = null; // Deselect the piece after moving
-                }
-            }
-        };
-
-        document.getElementById("exportButton").addEventListener("click", () => {
-            pieces.forEach(piece => {
-                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
-                const blob = new Blob([stlString], { type: 'application/octet-stream' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${piece.name}.stl`;
-                link.click();
-                URL.revokeObjectURL(url);
+        pieceNames.forEach(name => {
+            BABYLON.SceneLoader.ImportMesh("", "path/to/models/", name + ".glb", scene, function (newMeshes) {
+                pieces[name] = newMeshes[0];
             });
         });
 
+        // Create the chessboard
+        const boardSize = 8;
+        const squares = [];
+        const squareSize = 1;
+
+        // Create chessboard squares
+        for (let i = 0; i < boardSize; i++) {
+            for (let j = 0; j < boardSize; j++) {
+                const square = BABYLON.MeshBuilder.CreateGround("square", { width: squareSize, height: squareSize }, scene);
+                square.position.x = i * squareSize;
+                square.position.z = j * squareSize;
+                square.material = new BABYLON.StandardMaterial("mat", scene);
+                square.material.diffuseColor = (i + j) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
+                squares.push(square);
+            }
+        }
+
+        // Game state
+        let currentTurn = 'white'; // Track whose turn it is
+        let selectedPiece = null; // Track the selected piece
+        let validMoves = [];
+
+        // Function to get possible moves for a pawn
+        function getPawnMoves(position) {
+            const moves = [];
+            const direction = currentTurn === 'white' ? 1 : -1; // Determine direction based on turn
+
+            // Move forward one square
+            const forwardMove = { x: position.x, z: position.z + direction };
+            if (isValidMove(forwardMove)) {
+                moves.push(forwardMove);
+            }
+
+            // Move forward two squares from starting position
+            if ((currentTurn === 'white' && position.z === 1) || (currentTurn === 'black' && position.z === 6)) {
+                const doubleMove = { x: position.x, z: position.z + 2 * direction };
+                if (isValidMove(doubleMove)) {
+                    moves.push(doubleMove);
+                }
+            }
+
+            // Capture diagonally
+            const leftCapture = { x: position.x - 1, z: position.z + direction };
+            const rightCapture = { x: position.x + 1, z: position.z + direction };
+            if (isValidCapture(leftCapture)) {
+                moves.push(leftCapture);
+            }
+            if (isValidCapture(rightCapture)) {
+                moves.push(rightCapture);
+            }
+
+            return moves;
+        }
+
+        // Check if the move is valid
+        function isValidMove(move) {
+            return move.x >= 0 && move.x < boardSize && move.z >= 0 && move.z < boardSize;
+        }
+
+        // Check if the capture is valid
+        function isValidCapture(move) {
+            // Add logic to check if a piece exists in the target square
+            return isValidMove(move); // Placeholder
+        }
+
+        // Click event handler for piece selection and movement
+        scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                const pickResult = scene.pick(pointerInfo.x, pointerInfo.y);
+                if (pickResult.hit) {
+                    const clickedSquare = pickResult.pickedMesh;
+
+                    if (selectedPiece) {
+                        // Move piece to the clicked square
+                        const move = { x: clickedSquare.position.x, z: clickedSquare.position.z };
+                        if (validMoves.some(v => v.x === move.x && v.z === move.z)) {
+                            selectedPiece.position.x = move.x;
+                            selectedPiece.position.z = move.z;
+                            selectedPiece = null;
+                            validMoves = [];
+                            currentTurn = currentTurn === 'white' ? 'black' : 'white'; // Switch turns
+                        }
+                    } else {
+                        // Select the piece
+                        const piecePosition = { x: clickedSquare.position.x, z: clickedSquare.position.z }; // Example position
+                        selectedPiece = getPieceAtPosition(piecePosition); // Implement this function to get the piece
+
+                        if (selectedPiece) {
+                            validMoves = getPawnMoves(piecePosition); // Change this based on the selected piece type
+                        }
+                    }
+                }
+            }
+        });
+
+        // Function to get the piece at a given position (implement as needed)
+        function getPieceAtPosition(position) {
+            // Logic to find the piece at the given position
+            return null; // Placeholder
+        }
+
+        // Run the render loop
         engine.runRenderLoop(() => {
             scene.render();
         });
 
+        // Resize the engine on window resize
         window.addEventListener("resize", () => {
             engine.resize();
         });
