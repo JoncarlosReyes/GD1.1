@@ -42,7 +42,7 @@
                 piece.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0.5, col - boardSize / 2 + 0.5);
                 piece.material = new BABYLON.StandardMaterial(name + "Mat", scene);
                 piece.material.diffuseColor = color;
-                piece.metadata = { row, col, type: name };
+                piece.metadata = { row, col, type: name, color: color === new BABYLON.Color3(1, 1, 1) ? "white" : "black" };
                 piece.isPickable = true;
                 return piece;
             };
@@ -76,6 +76,24 @@
                     link.click();
                 });
             });
+
+            // Logic to move piece one step forward on click
+            scene.onPointerDown = function (evt, pickResult) {
+                if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.metadata) {
+                    const piece = pickResult.pickedMesh;
+                    const direction = piece.metadata.color === "white" ? 1 : -1;
+
+                    // Move one step forward
+                    piece.metadata.row += direction;
+                    piece.position.z += direction; // move piece on z-axis
+
+                    // Ensure the row is within bounds
+                    if (piece.metadata.row < 0 || piece.metadata.row >= boardSize) {
+                        piece.metadata.row -= direction;
+                        piece.position.z -= direction; // revert movement if out of bounds
+                    }
+                }
+            };
 
             return scene;
         };
