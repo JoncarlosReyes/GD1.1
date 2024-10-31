@@ -34,7 +34,7 @@
 
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, {size: tileSize}, scene);
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, { size: tileSize }, scene);
                     tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
                     tile.isPickable = true;
                     tile.metadata = { row, col };
@@ -64,13 +64,15 @@
                 piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
                 piece.isPickable = true; // Ensure the piece is clickable
                 piece.material = isLightSide ? lightMaterial : darkMaterial;
-                piece.metadata = { name, isLightSide };
+                piece.metadata = { name, isLightSide, row: position.y, col: position.z }; // Store position in metadata
 
                 piece.actionManager = new BABYLON.ActionManager(scene);
                 piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
                     if (selectedPiece === null && ((isLightSide && currentTurn === "white") || (!isLightSide && currentTurn === "black"))) {
                         selectedPiece = piece;
                         console.log("Selected:", selectedPiece.metadata.name);
+                        // Optional: Highlight selected piece
+                        piece.material.diffuseColor = new BABYLON.Color3(1, 1, 0); // Change to yellow for highlight
                     }
                 }));
             });
@@ -133,27 +135,24 @@
                         selectedPiece.position = pickedTile.position;
                         selectedPiece.metadata.row = row; // Update piece position
                         selectedPiece.metadata.col = col; // Update piece position
-                        selectedPiece = null;
-                        currentTurn = currentTurn === "white" ? "black" : "white";
+                        selectedPiece = null; // Deselect the piece
+                        currentTurn = currentTurn === "white" ? "black" : "white"; // Switch turn
                         document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
-                    } else {
-                        console.log("Invalid move");
                     }
                 }
             }
         };
 
-        // Export GLB function
-        const exportGLB = () => {
-            BABYLON.GLTF2Export.GLBAsync(scene, "chessGameExport").then((glb) => {
-                const anchor = document.createElement("a");
-                anchor.href = URL.createObjectURL(glb);
-                anchor.download = "chessGameExport.glb";
-                anchor.click();
+        // Export functionality
+        document.getElementById("exportButton").onclick = () => {
+            BABYLON.GLTF2Export.GLBAsync(scene, "chessboard").then((result) => {
+                const link = document.createElement("a");
+                link.href = result.blobUrl;
+                link.download = "chessboard.glb";
+                link.click();
+                URL.revokeObjectURL(result.blobUrl);
             });
         };
-
-        document.getElementById("exportButton").addEventListener("click", exportGLB);
 
         engine.runRenderLoop(() => {
             scene.render();
