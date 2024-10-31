@@ -37,7 +37,7 @@
                     const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, {size: tileSize}, scene);
                     tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
                     tile.isPickable = true;
-                    tile.metadata = { row, col }; // Store board coordinates in tile metadata
+                    tile.metadata = { row, col };
                     tiles[`tile_${row}_${col}`] = tile;
                     const tileMaterial = new BABYLON.StandardMaterial(`tileMat_${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
@@ -58,13 +58,13 @@
 
         // Function to create a piece
         const createPiece = (name, position, isLightSide) => {
-            BABYLON.SceneLoader.ImportMesh("", "./", `${name}.glb`, scene, (meshes) => {
+            BABYLON.SceneLoader.ImportMesh("", "./", name, scene, (meshes) => {
                 const piece = meshes[0];
                 piece.position = position;
                 piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
                 piece.isPickable = true;
                 piece.material = isLightSide ? lightMaterial : darkMaterial;
-                piece.metadata = { name, isLightSide }; // Store piece data
+                piece.metadata = { name, isLightSide };
 
                 piece.actionManager = new BABYLON.ActionManager(scene);
                 piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
@@ -76,10 +76,19 @@
             });
         };
 
-        // Example positions
-        createPiece("pawn", new BABYLON.Vector3(-3.5, 0.5, 2.5), true); // White pawn
-        createPiece("pawn", new BABYLON.Vector3(-3.5, 0.5, -2.5), false); // Black pawn
-        // Add other pieces similarly...
+        // Example piece placement using the GLB filenames you provided
+        createPiece("pawn.glb", new BABYLON.Vector3(-3.5, 0.5, 2.5), true);
+        createPiece("pawn.glb", new BABYLON.Vector3(-3.5, 0.5, -2.5), false);
+        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, 3.5), true);
+        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -3.5), false);
+        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, 3.5), true);
+        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, -3.5), false);
+        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, 3.5), true);
+        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, -3.5), false);
+        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, 3.5), true);
+        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, -3.5), false);
+        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, 3.5), true);
+        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, -3.5), false);
 
         scene.onPointerDown = (evt, pickResult) => {
             if (selectedPiece) {
@@ -87,46 +96,15 @@
 
                 if (pickedTile && pickedTile.name.startsWith("tile_")) {
                     const { row, col } = pickedTile.metadata;
-
-                    // Check if move is valid for the selected piece
                     const validMove = isValidMove(selectedPiece, row, col);
 
                     if (validMove) {
                         selectedPiece.position = pickedTile.position;
                         selectedPiece = null;
-
-                        // Switch turn
                         currentTurn = currentTurn === "white" ? "black" : "white";
                         document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
                     }
                 }
-            }
-        };
-
-        // Move validation logic based on piece type
-        const isValidMove = (piece, row, col) => {
-            const name = piece.metadata.name;
-            const isLightSide = piece.metadata.isLightSide;
-            const direction = isLightSide ? 1 : -1;
-
-            switch (name) {
-                case "pawn":
-                    return Math.abs(row - piece.position.x) <= 1 && col - piece.position.z === direction;
-                case "rook":
-                    return row === piece.position.x || col === piece.position.z;
-                case "knight":
-                    const dx = Math.abs(row - piece.position.x);
-                    const dz = Math.abs(col - piece.position.z);
-                    return (dx === 2 && dz === 1) || (dx === 1 && dz === 2);
-                case "bishop":
-                    return Math.abs(row - piece.position.x) === Math.abs(col - piece.position.z);
-                case "queen":
-                    return row === piece.position.x || col === piece.position.z ||
-                           Math.abs(row - piece.position.x) === Math.abs(col - piece.position.z);
-                case "king":
-                    return Math.abs(row - piece.position.x) <= 1 && Math.abs(col - piece.position.z) <= 1;
-                default:
-                    return false;
             }
         };
 
