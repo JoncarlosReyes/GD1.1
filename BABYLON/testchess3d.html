@@ -64,6 +64,8 @@
                 }
             }
 
+            let selectedPiece = null; // Track the selected piece
+
             // Export STL button
             document.getElementById("exportButton").addEventListener("click", () => {
                 pieces.forEach(piece => {
@@ -77,20 +79,34 @@
                 });
             });
 
-            // Logic to move piece one step forward on click
+            // Logic to select a piece and move it one step forward
             scene.onPointerDown = function (evt, pickResult) {
                 if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.metadata) {
                     const piece = pickResult.pickedMesh;
-                    const direction = piece.metadata.color === "white" ? 1 : -1;
 
-                    // Move one step forward
-                    piece.metadata.row += direction;
-                    piece.position.z += direction; // move piece on z-axis
+                    // Check if a piece is already selected
+                    if (selectedPiece && selectedPiece !== piece) {
+                        return; // Only move the currently selected piece
+                    }
 
-                    // Ensure the row is within bounds
-                    if (piece.metadata.row < 0 || piece.metadata.row >= boardSize) {
-                        piece.metadata.row -= direction;
-                        piece.position.z -= direction; // revert movement if out of bounds
+                    // Select the piece or move it if already selected
+                    if (!selectedPiece) {
+                        selectedPiece = piece; // Select this piece
+                    } else {
+                        const direction = piece.metadata.color === "white" ? 1 : -1;
+                        
+                        // Move one step along Y-axis
+                        piece.metadata.row += direction;
+                        piece.position.y += direction; // Move piece on the Y-axis
+
+                        // Ensure the row is within bounds
+                        if (piece.metadata.row < 0 || piece.metadata.row >= boardSize) {
+                            piece.metadata.row -= direction;
+                            piece.position.y -= direction; // Revert movement if out of bounds
+                        }
+
+                        // Deselect piece after move
+                        selectedPiece = null;
                     }
                 }
             };
