@@ -9,6 +9,7 @@
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export GLB</button>
+    <button id="moveForwardButton" style="position: absolute; top: 10px; left: 100px;">Move Forward</button>
 
     <script>
         const canvas = document.getElementById("renderCanvas");
@@ -60,17 +61,16 @@
                 const piece = meshes[0];
                 piece.position = position;
                 piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-                piece.isPickable = true; // Ensure the piece is clickable
+                piece.isPickable = true;
                 piece.material = isLightSide ? lightMaterial : darkMaterial;
-                piece.metadata = { name, isLightSide, row: position.y, col: position.z }; // Store position in metadata
+                piece.metadata = { name, isLightSide, row: position.y, col: position.z };
 
                 piece.actionManager = new BABYLON.ActionManager(scene);
                 piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
                     if (selectedPiece === null) {
                         selectedPiece = piece;
                         console.log("Selected:", selectedPiece.metadata.name);
-                        // Optional: Highlight selected piece
-                        piece.material.diffuseColor = new BABYLON.Color3(1, 1, 0); // Change to yellow for highlight
+                        piece.material.diffuseColor = new BABYLON.Color3(1, 1, 0); // Highlight
                     }
                 }));
             });
@@ -80,74 +80,33 @@
         for (let i = -3.5; i <= 3.5; i += 1) {
             createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, 2.5), true);
         }
-        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, 3.5), true);
-        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, 3.5), true);
-        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, 3.5), true);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, 3.5), true);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, 3.5), true);
-        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, 3.5), true);
-        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, 3.5), true);
-        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, 3.5), true);
 
         // Black pieces
         for (let i = -3.5; i <= 3.5; i += 1) {
             createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, -2.5), false);
         }
-        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -3.5), false);
-        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, -3.5), false);
-        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, -3.5), false);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, -3.5), false);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, -3.5), false);
-        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, -3.5), false);
-        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, -3.5), false);
-        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, -3.5), false);
 
-        // Function to validate moves (basic implementation)
-        const isValidMove = (piece, targetRow, targetCol) => {
-            const pieceRow = piece.metadata.row;
-            const pieceCol = piece.metadata.col;
+        // Function to move a piece forward
+        const movePieceForward = (piece) => {
+            const direction = piece.metadata.isLightSide ? 1 : -1;
+            const newRow = piece.metadata.row + direction;
 
-            // Basic logic for pawn movement
-            if (piece.metadata.name.includes("pawn")) {
-                const direction = piece.metadata.isLightSide ? 1 : -1; // White moves up, Black moves down
-                const startRow = piece.metadata.isLightSide ? 1 : 6; // Starting position
-                const isMovingForward = targetRow === pieceRow + direction && targetCol === pieceCol;
-                const isInitialMove = pieceRow === startRow && targetRow === pieceRow + direction * 2 && targetCol === pieceCol;
-
-                return isMovingForward || isInitialMove;
-            }
-
-            // Additional movement rules can be added for other pieces
-            return false; // No valid move
-        };
-
-        scene.onPointerDown = (evt, pickResult) => {
-            if (selectedPiece) {
-                const pickedTile = pickResult.pickedMesh;
-
-                if (pickedTile && pickedTile.name.startsWith("tile_")) {
-                    const { row, col } = pickedTile.metadata;
-                    const validMove = isValidMove(selectedPiece, row, col);
-
-                    if (validMove) {
-                        selectedPiece.position = pickedTile.position;
-                        selectedPiece.metadata.row = row; // Update piece position
-                        selectedPiece.metadata.col = col; // Update piece position
-                        selectedPiece.material.diffuseColor = selectedPiece.metadata.isLightSide ? lightMaterial.diffuseColor : darkMaterial.diffuseColor; // Reset color
-                        selectedPiece = null; // Deselect the piece
-                    }
+            // Ensure the move stays within board bounds
+            if (newRow >= 0 && newRow < 8) {
+                const targetTile = tiles[`tile_${newRow}_${piece.metadata.col}`];
+                if (targetTile) {
+                    piece.position = new BABYLON.Vector3(targetTile.position.x, 0.5, targetTile.position.z);
+                    piece.metadata.row = newRow;
                 }
             }
         };
 
-        // Export functionality
-        document.getElementById("exportButton").onclick = () => {
-            BABYLON.GLTF2Export.GLBAsync(scene, "chessboard").then((result) => {
-                const link = document.createElement("a");
-                link.href = result.blobUrl;
-                link.download = "chessboard.glb";
-                link.click();
-            });
+        document.getElementById("moveForwardButton").onclick = () => {
+            if (selectedPiece) {
+                movePieceForward(selectedPiece);
+                selectedPiece.material.diffuseColor = selectedPiece.metadata.isLightSide ? lightMaterial.diffuseColor : darkMaterial.diffuseColor;
+                selectedPiece = null;
+            }
         };
 
         engine.runRenderLoop(() => {
