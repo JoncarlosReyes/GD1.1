@@ -54,7 +54,7 @@
         const lightMaterial = new BABYLON.StandardMaterial("lightMaterial", scene);
         lightMaterial.diffuseColor = new BABYLON.Color3(1, 0.8, 0.6); // Light color for white pieces
         const darkMaterial = new BABYLON.StandardMaterial("darkMaterial", scene);
-        darkMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.3); // Dark gray for black pieces
+        darkMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2); // Darker gray for black pieces
 
         // Function to create a piece
         const createPiece = (name, position, isLightSide) => {
@@ -62,7 +62,7 @@
                 const piece = meshes[0];
                 piece.position = position;
                 piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-                piece.isPickable = true;
+                piece.isPickable = true; // Ensure the piece is clickable
                 piece.material = isLightSide ? lightMaterial : darkMaterial;
                 piece.metadata = { name, isLightSide };
 
@@ -137,17 +137,23 @@
                         currentTurn = currentTurn === "white" ? "black" : "white";
                         document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
                     } else {
-                        console.log("Invalid move for", selectedPiece.metadata.name);
+                        console.log("Invalid move");
                     }
                 }
             }
         };
 
-        document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.GLTF2Export.GLBAsync(scene, "chessboard").then((glbData) => {
-                glbData.downloadFiles();
+        // Export GLB function
+        const exportGLB = () => {
+            BABYLON.GLTF2Export.GLBAsync(scene, "chessGameExport").then((glb) => {
+                const anchor = document.createElement("a");
+                anchor.href = URL.createObjectURL(glb);
+                anchor.download = "chessGameExport.glb";
+                anchor.click();
             });
-        });
+        };
+
+        document.getElementById("exportButton").addEventListener("click", exportGLB);
 
         engine.runRenderLoop(() => {
             scene.render();
