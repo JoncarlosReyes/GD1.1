@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Babylon.js Chessboard with GLB Export</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylon.js Chess Game</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
-    <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export GLB</button>
-
+    <div id="turnIndicator" style="position: absolute; top: 10px; right: 10px; font-size: 24px;">White's Turn</div>
+    
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
+        let turn = "white";
         let selectedPiece = null;
+        const pieces = [];
+        const boardSize = 8;
+        const tileSize = 1;
 
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
@@ -26,130 +32,144 @@
             const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
             // Chessboard
-            const boardSize = 8;
-            const tileSize = 1;
-            const tiles = {};
-
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, { size: tileSize }, scene);
-                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
-                    tile.isPickable = true;
-                    tile.metadata = { row, col };
-                    tiles[`tile_${row}_${col}`] = tile;
-                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat_${row}_${col}`, scene);
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, { size: tileSize }, scene);
+                    tile.position = new BABYLON.Vector3(col - boardSize / 2 + 0.5, 0, row - boardSize / 2 + 0.5);
+                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
                     tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
                     tile.material = tileMaterial;
                 }
             }
 
+            // Initialize pieces
+            initializePieces(scene);
             return scene;
         };
 
-        const scene = createScene();
+        const initializePieces = (scene) => {
+            const piecePositions = [
+                [-3.5, 0.5, 3.5], [-2.5, 0.5, 3.5], [-1.5, 0.5, 3.5], [0, 0.5, 3.5], [1.5, 0.5, 3.5], [2.5, 0.5, 3.5], [3.5, 0.5, 3.5], // White Rooks, Knights, Bishops, Queen, King
+                [-3.5, 0.5, 1.5], [-2.5, 0.5, 1.5], [-1.5, 0.5, 1.5], [0, 0.5, 1.5], [1.5, 0.5, 1.5], [2.5, 0.5, 1.5], [3.5, 0.5, 1.5], // White Pawns
+                [-3.5, 0.5, -1.5], [-2.5, 0.5, -1.5], [-1.5, 0.5, -1.5], [0, 0.5, -1.5], [1.5, 0.5, -1.5], [2.5, 0.5, -1.5], [3.5, 0.5, -1.5], // Black Pawns
+                [-3.5, 0.5, -3.5], [-2.5, 0.5, -3.5], [-1.5, 0.5, -3.5], [0, 0.5, -3.5], [1.5, 0.5, -3.5], [2.5, 0.5, -3.5], [3.5, 0.5, -3.5]  // Black Rooks, Knights, Bishops, Queen, King
+            ];
 
-        // Define materials for pieces
-        const lightMaterial = new BABYLON.StandardMaterial("lightMaterial", scene);
-        lightMaterial.diffuseColor = new BABYLON.Color3(1, 0.8, 0.6); // Light color for white pieces
-        const darkMaterial = new BABYLON.StandardMaterial("darkMaterial", scene);
-        darkMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2); // Darker gray for black pieces
+            const pieceNames = [
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook", // White pieces
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", // White pawns
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", // Black pawns
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" // Black pieces
+            ];
 
-        // Function to create a piece
-        const createPiece = (name, position, isLightSide) => {
-            BABYLON.SceneLoader.ImportMesh("", "./", name, scene, (meshes) => {
+            const colors = {
+                white: new BABYLON.Color3(1, 1, 1),
+                black: new BABYLON.Color3(0.3, 0.3, 0.3),
+            };
+
+            for (let i = 0; i < pieceNames.length; i++) {
+                const position = new BABYLON.Vector3(piecePositions[i][0], piecePositions[i][1], piecePositions[i][2]);
+                loadPiece(pieceNames[i], position, i < 16 ? colors.white : colors.black, scene);
+            }
+        };
+
+        const loadPiece = (name, position, color, scene) => {
+            BABYLON.SceneLoader.ImportMesh("", "https://joncarlosreyes.github.io/BABYLON/models/", `${name}.glb`, scene, (meshes) => {
                 const piece = meshes[0];
                 piece.position = position;
-                piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-                piece.isPickable = true; // Ensure the piece is clickable
-                piece.material = isLightSide ? lightMaterial : darkMaterial;
-                piece.metadata = { name, isLightSide, row: position.y, col: position.z }; // Store position in metadata
+                piece.scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
+                piece.material = new BABYLON.StandardMaterial(name + "Mat", scene);
+                piece.material.diffuseColor = color;
 
                 piece.actionManager = new BABYLON.ActionManager(scene);
                 piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                    if (selectedPiece === null) {
-                        selectedPiece = piece;
-                        console.log("Selected:", selectedPiece.metadata.name);
-                        // Optional: Highlight selected piece
-                        piece.material.diffuseColor = new BABYLON.Color3(1, 1, 0); // Change to yellow for highlight
-                    }
+                    selectPiece(piece);
                 }));
+
+                pieces.push(piece);
             });
         };
 
-        // White pieces
-        for (let i = -3.5; i <= 3.5; i += 1) {
-            createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, 2.5), true);
-        }
-        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, 3.5), true);
-        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, 3.5), true);
-        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, 3.5), true);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, 3.5), true);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, 3.5), true);
-        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, 3.5), true);
-        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, 3.5), true);
-        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, 3.5), true);
-
-        // Black pieces
-        for (let i = -3.5; i <= 3.5; i += 1) {
-            createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, -2.5), false);
-        }
-        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -3.5), false);
-        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, -3.5), false);
-        createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, -3.5), false);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, -3.5), false);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, -3.5), false);
-        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, -3.5), false);
-        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, -3.5), false);
-        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, -3.5), false);
-
-        // Function to validate moves (basic implementation)
-        const isValidMove = (piece, targetRow, targetCol) => {
-            const pieceRow = piece.metadata.row;
-            const pieceCol = piece.metadata.col;
-
-            // Basic logic for pawn movement
-            if (piece.metadata.name.includes("pawn")) {
-                const direction = piece.metadata.isLightSide ? 1 : -1; // White moves up, Black moves down
-                const startRow = piece.metadata.isLightSide ? 1 : 6; // Starting position
-                const isMovingForward = targetRow === pieceRow + direction && targetCol === pieceCol;
-                const isInitialMove = pieceRow === startRow && targetRow === pieceRow + direction * 2 && targetCol === pieceCol;
-
-                return isMovingForward || isInitialMove;
-            }
-
-            // Additional movement rules can be added for other pieces
-            return false; // No valid move
-        };
-
-        scene.onPointerDown = (evt, pickResult) => {
+        const selectPiece = (piece) => {
             if (selectedPiece) {
-                const pickedTile = pickResult.pickedMesh;
+                const targetPosition = piece.position.clone();
+                const isMoveValid = canMove(selectedPiece, targetPosition);
 
-                if (pickedTile && pickedTile.name.startsWith("tile_")) {
-                    const { row, col } = pickedTile.metadata;
-                    const validMove = isValidMove(selectedPiece, row, col);
-
-                    if (validMove) {
-                        selectedPiece.position = pickedTile.position;
-                        selectedPiece.metadata.row = row; // Update piece position
-                        selectedPiece.metadata.col = col; // Update piece position
-                        selectedPiece.material.diffuseColor = selectedPiece.metadata.isLightSide ? lightMaterial.diffuseColor : darkMaterial.diffuseColor; // Reset color
-                        selectedPiece = null; // Deselect the piece
-                    }
+                if (isMoveValid) {
+                    piece.position.copyFrom(selectedPiece.position);
+                    selectedPiece.position.y = -10; // Move captured piece off the board
+                    selectedPiece = null;
+                    turn = turn === "white" ? "black" : "white"; // Change turn
+                    document.getElementById("turnIndicator").innerText = turn.charAt(0).toUpperCase() + turn.slice(1) + "'s Turn";
+                }
+            } else {
+                // Only allow selection if it's the player's turn
+                if ((turn === "white" && piece.material.diffuseColor.equals(new BABYLON.Color3(1, 1, 1))) || 
+                    (turn === "black" && piece.material.diffuseColor.equals(new BABYLON.Color3(0.3, 0.3, 0.3)))) {
+                    selectedPiece = piece;
                 }
             }
         };
 
-        // Export functionality
-        document.getElementById("exportButton").onclick = () => {
-            BABYLON.GLTF2Export.GLBAsync(scene, "chessboard").then((result) => {
-                const link = document.createElement("a");
-                link.href = result.blobUrl;
-                link.download = "chessboard.glb";
-                link.click();
-            });
+        const canMove = (piece, targetPosition) => {
+            const currentPos = piece.position;
+
+            const deltaRow = targetPosition.z - currentPos.z;
+            const deltaCol = targetPosition.x - currentPos.x;
+
+            // Movement logic for pawns
+            if (piece.name.includes("pawn")) {
+                const direction = piece.position.z > 0 ? -1 : 1; // White moves up, black moves down
+                if (deltaRow === direction && deltaCol === 0) {
+                    return true; // Move forward
+                }
+                if (deltaRow === direction && Math.abs(deltaCol) === 1) {
+                    return true; // Capture on diagonal
+                }
+            }
+
+            // Add movement logic for other pieces
+            // Rooks
+            if (piece.name.includes("rook")) {
+                if (deltaRow === 0 || deltaCol === 0) {
+                    return true; // Move straight
+                }
+            }
+
+            // Knights
+            if (piece.name.includes("knight")) {
+                if ((Math.abs(deltaRow) === 2 && Math.abs(deltaCol) === 1) || 
+                    (Math.abs(deltaRow) === 1 && Math.abs(deltaCol) === 2)) {
+                    return true; // Knight move
+                }
+            }
+
+            // Bishops
+            if (piece.name.includes("bishop")) {
+                if (Math.abs(deltaRow) === Math.abs(deltaCol)) {
+                    return true; // Move diagonally
+                }
+            }
+
+            // Queens
+            if (piece.name.includes("queen")) {
+                if (Math.abs(deltaRow) === Math.abs(deltaCol) || 
+                    deltaRow === 0 || deltaCol === 0) {
+                    return true; // Move like a rook or bishop
+                }
+            }
+
+            // Kings
+            if (piece.name.includes("king")) {
+                if (Math.abs(deltaRow) <= 1 && Math.abs(deltaCol) <= 1) {
+                    return true; // Move one square in any direction
+                }
+            }
+
+            return false; // Move not allowed
         };
 
+        const scene = createScene();
         engine.runRenderLoop(() => {
             scene.render();
         });
