@@ -162,11 +162,9 @@
         pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
         let selectedPiece = null;
-        let selectedPosition = null;
 
         scene.onPointerObservable.add((evt) => {
             if (evt.type === BABYLON.PointerEventTypes.POINTERTAP && selectedPiece) {
-                // Get tile position based on mouse click
                 const pickInfo = scene.pick(scene.pointerX, scene.pointerY);
                 if (pickInfo.hit) {
                     const clickedTile = pickInfo.pickedMesh;
@@ -196,7 +194,6 @@
                     return true; // Move forward
                 }
                 if (deltaRow === direction && Math.abs(deltaCol) === 1) {
-                    // Capture logic
                     return true; // Capture on diagonal
                 }
             }
