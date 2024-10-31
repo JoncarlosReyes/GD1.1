@@ -9,12 +9,10 @@
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export GLB</button>
-    <div id="turnIndicator" style="position: absolute; top: 10px; left: 120px; font-size: 20px;">Turn: White</div>
 
     <script>
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
-        let currentTurn = "white";
         let selectedPiece = null;
 
         const createScene = () => {
@@ -68,7 +66,7 @@
 
                 piece.actionManager = new BABYLON.ActionManager(scene);
                 piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                    if (selectedPiece === null && ((isLightSide && currentTurn === "white") || (!isLightSide && currentTurn === "black"))) {
+                    if (selectedPiece === null) {
                         selectedPiece = piece;
                         console.log("Selected:", selectedPiece.metadata.name);
                         // Optional: Highlight selected piece
@@ -135,9 +133,8 @@
                         selectedPiece.position = pickedTile.position;
                         selectedPiece.metadata.row = row; // Update piece position
                         selectedPiece.metadata.col = col; // Update piece position
+                        selectedPiece.material.diffuseColor = selectedPiece.metadata.isLightSide ? lightMaterial.diffuseColor : darkMaterial.diffuseColor; // Reset color
                         selectedPiece = null; // Deselect the piece
-                        currentTurn = currentTurn === "white" ? "black" : "white"; // Switch turn
-                        document.getElementById("turnIndicator").innerText = `Turn: ${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)}`;
                     }
                 }
             }
@@ -150,7 +147,6 @@
                 link.href = result.blobUrl;
                 link.download = "chessboard.glb";
                 link.click();
-                URL.revokeObjectURL(result.blobUrl);
             });
         };
 
