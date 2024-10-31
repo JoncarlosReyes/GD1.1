@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Babylon.js Chessboard with STL Export and Logic</title>
+    <title>Babylon.js Chessboard with STL Export and Movement</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
@@ -79,34 +79,30 @@
                 });
             });
 
-            // Logic to select a piece and move it one step forward
+            // Logic to select a piece and move it
             scene.onPointerDown = function (evt, pickResult) {
                 if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.metadata) {
-                    const piece = pickResult.pickedMesh;
+                    const clickedPiece = pickResult.pickedMesh;
 
-                    // Check if a piece is already selected
-                    if (selectedPiece && selectedPiece !== piece) {
-                        return; // Only move the currently selected piece
-                    }
+                    // If a piece is already selected, attempt to move it
+                    if (selectedPiece) {
+                        // Determine valid moves based on piece type
+                        // Example: For simplicity, this example allows movement to any adjacent tile
+                        const validMove = Math.abs(clickedPiece.metadata.row - selectedPiece.metadata.row) <= 1 &&
+                                          Math.abs(clickedPiece.metadata.col - selectedPiece.metadata.col) <= 1;
 
-                    // Select the piece or move it if already selected
-                    if (!selectedPiece) {
-                        selectedPiece = piece; // Select this piece
-                    } else {
-                        const direction = piece.metadata.color === "white" ? 1 : -1;
-                        
-                        // Move one step along Y-axis
-                        piece.metadata.row += direction;
-                        piece.position.y += direction; // Move piece on the Y-axis
+                        if (validMove) {
+                            // Move selected piece to new position
+                            selectedPiece.metadata.row = clickedPiece.metadata.row;
+                            selectedPiece.metadata.col = clickedPiece.metadata.col;
+                            selectedPiece.position = new BABYLON.Vector3(clickedPiece.position.x, 0.5, clickedPiece.position.z);
 
-                        // Ensure the row is within bounds
-                        if (piece.metadata.row < 0 || piece.metadata.row >= boardSize) {
-                            piece.metadata.row -= direction;
-                            piece.position.y -= direction; // Revert movement if out of bounds
+                            // Deselect after movement
+                            selectedPiece = null;
                         }
-
-                        // Deselect piece after move
-                        selectedPiece = null;
+                    } else {
+                        // Select the clicked piece if it's not already selected
+                        selectedPiece = clickedPiece;
                     }
                 }
             };
