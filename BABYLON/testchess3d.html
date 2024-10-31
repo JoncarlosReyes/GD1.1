@@ -15,38 +15,37 @@
         const createScene = () => {
             const scene = new BABYLON.Scene(engine);
 
-            // Camera
+            // Camera settings
             const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 20, BABYLON.Vector3.Zero(), scene);
             camera.attachControl(canvas, true);
-            camera.lowerRadiusLimit = 10;
+            camera.lowerRadiusLimit = 12;
             camera.upperRadiusLimit = 30;
+            camera.wheelPrecision = 50;
 
-            // Light
+            // Lighting
             const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.7;
 
-            // Create chessboard
+            // Chessboard creation
             const boardSize = 8;
             const tileSize = 1.5;
             const tiles = {};
 
+            // Board material setup
+            const whiteMaterial = new BABYLON.StandardMaterial("whiteTileMat", scene);
+            whiteMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1); // Solid white color
+
+            const blackMaterial = new BABYLON.StandardMaterial("blackTileMat", scene);
+            blackMaterial.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1); // Solid black color
+
             for (let row = 0; row < boardSize; row++) {
                 for (let col = 0; col < boardSize; col++) {
                     const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, { size: tileSize, height: 0.1 }, scene);
-                    
-                    // Adjust height slightly to avoid z-fighting
-                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0.05, col - boardSize / 2 + 0.5);
+                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
+                    tile.material = (row + col) % 2 === 0 ? whiteMaterial : blackMaterial;
                     tiles[`tile_${row}_${col}`] = tile;
-
-                    // Apply alternating colors for chessboard pattern
-                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat_${row}_${col}`, scene);
-                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(0.9, 0.9, 0.9) : new BABYLON.Color3(0.2, 0.2, 0.2);
-                    tile.material = tileMaterial;
-                    tile.metadata = { row, col };
-                    tile.isPickable = true;
                 }
             }
-
-            // Pieces and other game setup would go here...
 
             return scene;
         };
