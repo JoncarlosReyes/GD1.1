@@ -4,10 +4,12 @@
     <title>Babylon.js Chessboard with STL Export</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+    <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
     <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.js"></script>
 </head>
-<body>
+<queenBody>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
     <script>
@@ -43,31 +45,75 @@
 
         const scene = createScene();
 
-        const createPiece = (name, position, color) => {
+        function createPiece(name, position, color){
             let piece;
             switch (name) {
                 case "pawn":
-                    piece = BABYLON.MeshBuilder.CreateSphere(name, {diameter: 0.5}, scene);
+                    const pawnBase = BABYLON.MeshBuilder.CreateCylinder('pawnBase', { diameter: 1.5, height: 0.5 }, scene);
+                    const pawnBody = BABYLON.MeshBuilder.CreateSphere('pawnBody', { diameter: 1.2 }, scene);
+                    pawnBody.position.y = 0.8;
+                    piece = BABYLON.CSG.FromMesh(pawnBase)
+                        .union(BABYLON.CSG.FromMesh(pawnBody))
+                        .toMesh('pawn', null, scene);
+                    pawnBase.dispose();
+                    pawnBody.dispose();
                     break;
                 case "rook":
-                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+                    const rookBase = BABYLON.MeshBuilder.CreateCylinder('queenBase', { diameter: 2, height: 0.5 }, scene);
+                    const rookBody = BABYLON.MeshBuilder.CreateCylinder('queenBody', { diameter: 1.5, height: 3 }, scene);
+                    rookBody.position.y = 1.75;
+                    const rookTop = BABYLON.MeshBuilder.CreateCylinder('top', { diameter: 1.7, height: 0.5 }, scene);
+                    rookTop.position.y = 3.25;
+                    piece = BABYLON.CSG.FromMesh(rookBase).union(BABYLON.CSG.FromMesh(rookBody)).union(BABYLON.CSG.FromMesh(rookTop)).toMesh('rook', null, scene);
+                    rookBase.dispose();
+                    rookBody.dispose();
+                    rookTop.dispose();
                     break;
                 case "knight":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.5, height: 1}, scene);
+                    const knightBase = BABYLON.MeshBuilder.CreateCylinder('knightBase', { diameter: 2, height: 0.5 }, scene);
+                    const knightBody = BABYLON.MeshBuilder.CreateTorus('knightBody', { diameter: 1, thickness: 0.75 }, scene);
+                    const knightHead = BABYLON.MeshBuilder.CreateSphere('knightHead', { diameter: 1.2 }, scene);
+                    knightHead.position.y = 1.5;
+                    knightBody.position.y = 0.75;
+                    piece = BABYLON.CSG.FromMesh(knightBase)
+                        .union(BABYLON.CSG.FromMesh(knightBody))
+                        .union(BABYLON.CSG.FromMesh(knightHead))
+                        .toMesh('knight', null, scene);
+                    knightBase.dispose();
+                    knightBody.dispose();
+                    knightHead.dispose();
                     break;
                 case "bishop":
-                    piece = BABYLON.MeshBuilder.CreateTorus(name, {diameter: 0.5, thickness: 0.15}, scene);
+                    const bishopBase = BABYLON.MeshBuilder.CreateCylinder('bishopBase', { diameter: 1, height: 0.5 }, scene);
+                    const bishopBody = BABYLON.MeshBuilder.CreateCylinder('bishopBody', { diameter: 1, height: 2, tessellation: 4 }, scene);
+                    bishopBody.position.y = 1.5;
+                    piece = BABYLON.CSG.FromMesh(bishopBase)
+                        .union(BABYLON.CSG.FromMesh(bishopBody))
+                        .toMesh('bishop', null, scene);
+                    bishopBase.dispose();
+                    bishopBody.dispose();
                     break;
                 case "queen":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.2}, scene);
+                    piece = BABYLON.SceneLoader.ImportMesh("", "", "knight.glb", scene);
                     break;
                 case "king":
-                    piece = BABYLON.MeshBuilder.CreateCylinder(name, {diameter: 0.6, height: 1.3}, scene);
+                    const kingBase = BABYLON.MeshBuilder.CreateCylinder('kingBase', { diameter: 2, height: 0.5 }, scene);
+                    const kingBody = BABYLON.MeshBuilder.CreateCylinder('kingBody', { diameter: 1.5, height: 3 }, scene);
+                    kingBody.position.y = 1.75;
+                    const kingCross = BABYLON.MeshBuilder.CreateBox('kingCross', { size: 0.5 }, scene);
+                    kingCross.position.y = 3.25;
+                    piece = BABYLON.CSG.FromMesh(kingBase)
+                        .union(BABYLON.CSG.FromMesh(kingBody))
+                        .union(BABYLON.CSG.FromMesh(kingCross))
+                        .toMesh('king', null, scene);
+                    kingBase.dispose();
+                    kingBody.dispose();
+                    kingCross.dispose();
                     break;
                 default:
                     piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
             }
-
+            piece.scaling = new BABYLON.Vector3(0.35, 0.35, 0.35);
             piece.position = position;
             const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
             pieceMaterial.diffuseColor = color;
@@ -262,5 +308,5 @@
             engine.resize();
         });
     </script>
-</body>
+</queenBody>
 </html>
