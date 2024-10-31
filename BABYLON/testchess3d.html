@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Babylon.js Chessboard Game</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+</head>
+<body>
+    <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
+
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = () => {
+            const scene = new BABYLON.Scene(engine);
+
+            // Camera
+            const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2.5, 25, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+
+            // Light
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+            // Create board
+            const boardSize = 8;
+            const tileSize = 1.5;
+            const tiles = {};
+
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile_${row}_${col}`, { size: tileSize }, scene);
+                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
+                    tiles[`tile_${row}_${col}`] = tile;
+                    
+                    // Color alternation for chessboard pattern
+                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat_${row}_${col}`, scene);
+                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
+                    tile.material = tileMaterial;
+                    tile.metadata = { row, col };
+                    tile.isPickable = true;
+                }
+            }
+
+            // Load Pieces (Example for Pawns)
+            const pieceMaterial = new BABYLON.StandardMaterial("pieceMaterial", scene);
+            pieceMaterial.diffuseColor = new BABYLON.Color3(1, 0.8, 0.6);
+
+            const createPiece = (name, position) => {
+                BABYLON.SceneLoader.ImportMesh("", "./", name, scene, (meshes) => {
+                    const piece = meshes[0];
+                    piece.position = position;
+                    piece.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+                    piece.material = pieceMaterial;
+                    piece.metadata = { type: "pawn", row: position.x, col: position.z };
+                    piece.isPickable = true;
+                });
+            };
+
+            // Position pawns for testing
+            for (let i = 0; i < boardSize; i++) {
+                createPiece("pawn.glb", new BABYLON.Vector3(i - boardSize / 2 + 0.5, 0.5, 2.5));
+            }
+
+            return scene;
+        };
+
+        const scene = createScene();
+        engine.runRenderLoop(() => scene.render());
+        window.addEventListener("resize", () => engine.resize());
+    </script>
+</body>
+</html>
 
