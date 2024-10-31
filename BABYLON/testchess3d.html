@@ -7,13 +7,9 @@
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
-    <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
-    <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
-    <script src="https://cdn.babylonjs.com/gui/babylon.gui.js"></script>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
     <div id="turnIndicator" style="position: absolute; top: 10px; right: 10px; font-size: 24px;">White's Turn</div>
     
     <script>
@@ -52,77 +48,46 @@
         };
 
         const initializePieces = (scene) => {
+            const piecePositions = [
+                [-3.5, 0.5, 3.5], [-2.5, 0.5, 3.5], [-1.5, 0.5, 3.5], [0, 0.5, 3.5], [1.5, 0.5, 3.5], [2.5, 0.5, 3.5], [3.5, 0.5, 3.5], // White Rooks, Knights, Bishops, Queen, King
+                [-3.5, 0.5, 1.5], [-2.5, 0.5, 1.5], [-1.5, 0.5, 1.5], [0, 0.5, 1.5], [1.5, 0.5, 1.5], [2.5, 0.5, 1.5], [3.5, 0.5, 1.5], // White Pawns
+                [-3.5, 0.5, -1.5], [-2.5, 0.5, -1.5], [-1.5, 0.5, -1.5], [0, 0.5, -1.5], [1.5, 0.5, -1.5], [2.5, 0.5, -1.5], [3.5, 0.5, -1.5], // Black Pawns
+                [-3.5, 0.5, -3.5], [-2.5, 0.5, -3.5], [-1.5, 0.5, -3.5], [0, 0.5, -3.5], [1.5, 0.5, -3.5], [2.5, 0.5, -3.5], [3.5, 0.5, -3.5]  // Black Rooks, Knights, Bishops, Queen, King
+            ];
+
+            const pieceNames = [
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook", // White pieces
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", // White pawns
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", // Black pawns
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" // Black pieces
+            ];
+
             const colors = {
                 white: new BABYLON.Color3(1, 1, 1),
                 black: new BABYLON.Color3(0.3, 0.3, 0.3),
             };
 
-            // Place pawns
-            for (let i = 0; i < 8; i++) {
-                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 1.5), colors.white));
-                pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -1.5), colors.black));
+            for (let i = 0; i < pieceNames.length; i++) {
+                const position = new BABYLON.Vector3(piecePositions[i][0], piecePositions[i][1], piecePositions[i][2]);
+                loadPiece(pieceNames[i], position, i < 16 ? colors.white : colors.black, scene);
             }
-
-            // Place rooks
-            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), colors.black));
-            pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), colors.black));
-
-            // Place knights
-            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), colors.black));
-            pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), colors.black));
-
-            // Place bishops
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), colors.black));
-            pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), colors.black));
-
-            // Place queens and kings
-            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, 3.5), colors.white));
-            pieces.push(createPiece("queen", new BABYLON.Vector3(0, 0.5, -3.5), colors.black));
-            pieces.push(createPiece("king", new BABYLON.Vector3(-0.5, 0.5, -3.5), colors.black));
         };
 
-        const createPiece = (name, position, color) => {
-            let piece;
-            switch (name) {
-                case "pawn":
-                    piece = BABYLON.MeshBuilder.CreateCylinder('pawn', { diameter: 1.5, height: 2 }, scene);
-                    break;
-                case "rook":
-                    piece = BABYLON.MeshBuilder.CreateCylinder('rook', { diameter: 2, height: 3 }, scene);
-                    break;
-                case "knight":
-                    piece = BABYLON.MeshBuilder.CreateTorus('knight', { diameter: 1, thickness: 0.5 }, scene);
-                    break;
-                case "bishop":
-                    piece = BABYLON.MeshBuilder.CreateCylinder('bishop', { diameter: 1, height: 3 }, scene);
-                    break;
-                case "queen":
-                    piece = BABYLON.MeshBuilder.CreateCylinder('queen', { diameter: 1.5, height: 3 }, scene);
-                    break;
-                case "king":
-                    piece = BABYLON.MeshBuilder.CreateCylinder('king', { diameter: 1.5, height: 3 }, scene);
-                    break;
-                default:
-                    piece = BABYLON.MeshBuilder.CreateBox(name, { size: 0.5 }, scene);
-            }
-            piece.scaling = new BABYLON.Vector3(0.35, 0.35, 0.35);
-            piece.position = position;
-            const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
-            pieceMaterial.diffuseColor = color;
-            piece.material = pieceMaterial;
-            piece.actionManager = new BABYLON.ActionManager(scene);
-            piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
-                selectPiece(piece);
-            }));
+        const loadPiece = (name, position, color, scene) => {
+            BABYLON.SceneLoader.ImportMesh("", "https://joncarlosreyes.github.io/BABYLON/models/", `${name}.glb`, scene, (meshes) => {
+                const piece = meshes[0];
+                piece.position = position;
+                piece.scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
+                piece.material = new BABYLON.StandardMaterial(name + "Mat", scene);
+                piece.material.diffuseColor = color;
 
-            return piece;
+                piece.actionManager = new BABYLON.ActionManager(scene);
+                piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                    selectPiece(piece);
+                }));
+
+                pieces.push(piece);
+            });
         };
 
         const selectPiece = (piece) => {
@@ -131,6 +96,12 @@
                 const isMoveValid = canMove(selectedPiece, targetPosition);
 
                 if (isMoveValid) {
+                    // Capture logic
+                    const targetPiece = pieces.find(p => p.position.equals(targetPosition));
+                    if (targetPiece) {
+                        targetPiece.position.y = -10; // Move captured piece off the board
+                    }
+                    
                     piece.position.copyFrom(selectedPiece.position);
                     selectedPiece.position.y = -10; // Move captured piece off the board
                     selectedPiece = null;
@@ -153,8 +124,8 @@
             const deltaCol = targetPosition.x - currentPos.x;
 
             // Movement logic for pawns
-            if (piece.name.startsWith("pawn")) {
-                const direction = piece.position.z > 0 ? -1 : 1; // White moves up, black moves down
+            if (piece.name.includes("pawn")) {
+                const direction = piece.material.diffuseColor.equals(new BABYLON.Color3(1, 1, 1)) ? -1 : 1; // White moves up, black moves down
                 if (deltaRow === direction && deltaCol === 0) {
                     return true; // Move forward
                 }
@@ -164,38 +135,32 @@
             }
 
             // Add movement logic for other pieces
-            // Rooks
-            if (piece.name.startsWith("rook")) {
-                if (deltaRow === 0 || deltaCol === 0) {
-                    return true; // Move straight
-                }
-            }
-
-            // Knights
-            if (piece.name.startsWith("knight")) {
+            // Rooks, Knights, Bishops, Queens, Kings...
+            // Example for Knights:
+            if (piece.name.includes("knight")) {
                 if ((Math.abs(deltaRow) === 2 && Math.abs(deltaCol) === 1) || 
                     (Math.abs(deltaRow) === 1 && Math.abs(deltaCol) === 2)) {
                     return true; // Knight move
                 }
             }
 
-            // Bishops
-            if (piece.name.startsWith("bishop")) {
+            // Example for Bishops:
+            if (piece.name.includes("bishop")) {
                 if (Math.abs(deltaRow) === Math.abs(deltaCol)) {
                     return true; // Move diagonally
                 }
             }
 
-            // Queens
-            if (piece.name.startsWith("queen")) {
+            // Example for Queens:
+            if (piece.name.includes("queen")) {
                 if (Math.abs(deltaRow) === Math.abs(deltaCol) || 
                     deltaRow === 0 || deltaCol === 0) {
                     return true; // Move like a rook or bishop
                 }
             }
 
-            // Kings
-            if (piece.name.startsWith("king")) {
+            // Example for Kings:
+            if (piece.name.includes("king")) {
                 if (Math.abs(deltaRow) <= 1 && Math.abs(deltaCol) <= 1) {
                     return true; // Move one square in any direction
                 }
@@ -203,10 +168,6 @@
 
             return false; // Move not allowed
         };
-
-        document.getElementById("exportButton").addEventListener("click", () => {
-            BABYLON.STLExport.Export(scene, 'chessboard');
-        });
 
         const scene = createScene();
         engine.runRenderLoop(() => {
