@@ -79,7 +79,7 @@
         // Function to position the pieces correctly on the board
         const positionPieces = () => {
             // White pieces
-            for (let i = -3.5; i <= 3.5; i += 1) {
+            for (let i = -3.5; i <= 3.5; i++) {
                 createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, 1.5), true); // Pawns on row 2
             }
             createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, 0.5), true);
@@ -92,7 +92,7 @@
             createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, 0.5), true);
 
             // Black pieces
-            for (let i = -3.5; i <= 3.5; i += 1) {
+            for (let i = -3.5; i <= 3.5; i++) {
                 createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, -1.5), false); // Pawns on row 7
             }
             createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -0.5), false);
