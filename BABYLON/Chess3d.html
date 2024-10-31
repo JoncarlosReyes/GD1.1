@@ -76,19 +76,31 @@
             });
         };
 
-        // Example piece placement using the GLB filenames you provided
-        createPiece("pawn.glb", new BABYLON.Vector3(-3.5, 0.5, 2.5), true);
-        createPiece("pawn.glb", new BABYLON.Vector3(-3.5, 0.5, -2.5), false);
+        // White pieces
+        for (let i = -3.5; i <= 3.5; i += 1) {
+            createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, 2.5), true);
+        }
         createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, 3.5), true);
-        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -3.5), false);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, 3.5), true);
-        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, -3.5), false);
         createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, 3.5), true);
-        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, -3.5), false);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, 3.5), true);
-        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, -3.5), false);
         createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, 3.5), true);
+        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, 3.5), true);
+        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, 3.5), true);
+        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, 3.5), true);
+        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, 3.5), true);
+        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, 3.5), true);
+
+        // Black pieces
+        for (let i = -3.5; i <= 3.5; i += 1) {
+            createPiece("pawn.glb", new BABYLON.Vector3(i, 0.5, -2.5), false);
+        }
+        createPiece("rook.glb", new BABYLON.Vector3(-3.5, 0.5, -3.5), false);
+        createPiece("knight (1).glb", new BABYLON.Vector3(-2.5, 0.5, -3.5), false);
         createPiece("bishop.glb", new BABYLON.Vector3(-1.5, 0.5, -3.5), false);
+        createPiece("chess_king.glb", new BABYLON.Vector3(0.5, 0.5, -3.5), false);
+        createPiece("queen (1).glb", new BABYLON.Vector3(-0.5, 0.5, -3.5), false);
+        createPiece("bishop.glb", new BABYLON.Vector3(1.5, 0.5, -3.5), false);
+        createPiece("knight (1).glb", new BABYLON.Vector3(2.5, 0.5, -3.5), false);
+        createPiece("rook.glb", new BABYLON.Vector3(3.5, 0.5, -3.5), false);
 
         scene.onPointerDown = (evt, pickResult) => {
             if (selectedPiece) {
