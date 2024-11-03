@@ -242,16 +242,9 @@
             }
         }
 
-        document.getElementById("exportButton").addEventListener("click", () => {
-            pieces.forEach(piece => {
-                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
-                const blob = new Blob([stlString], { type: 'application/octet-stream' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${piece.name}.stl`;
-                link.click();
-            });
+              document.getElementById("exportButton").addEventListener("click", () => {
+            const meshesToExport = pieces.concat(scene.meshes.filter(mesh => mesh.name.startsWith("tile")));
+            BABYLON.STLExport.CreateSTL(meshesToExport, true, "chessboard.stl", scene);
         });
 
         engine.runRenderLoop(() => {
