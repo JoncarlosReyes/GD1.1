@@ -242,18 +242,27 @@
             }
         }
 
-              document.getElementById("exportButton").addEventListener("click", () => {
-            const meshesToExport = pieces.concat(scene.meshes.filter(mesh => mesh.name.startsWith("tile")));
-            BABYLON.STLExport.CreateSTL(meshesToExport, true, "chessboard.stl", scene);
-        });
+             document.getElementById("exportButton").addEventListener("click", () => {
+    const stlData = BABYLON.StlExporter.ExportMesh(pieces);
+    const blob = new Blob([stlData], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'chess_pieces.stl';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
 
-        engine.runRenderLoop(() => {
-            scene.render();
-        });
+// Start the render loop
+engine.runRenderLoop(() => {
+    scene.render();
+});
 
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
+// Resize the engine on window resize
+window.addEventListener("resize", () => {
+    engine.resize();
+});
+
     </script>
 </body>
 </html>
