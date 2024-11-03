@@ -83,41 +83,42 @@
         const pieces = [];
         // Place pawns
         for (let i = 0; i < 8; i++) {
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 2.5), new BABYLON.Color3(1, 1, 1)));
-            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 2.5), new BABYLON.Color3(1, 1, 1))); // White pawns
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2.5), new BABYLON.Color3(0.3, 0.3, 0.3))); // Black pawns
         }
 
-        // Place rooks
+        // Place other pieces
+        // Rooks
         pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
         pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
-        // Place knights
+        // Knights
         pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
         pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
-        // Place bishops
+        // Bishops
         pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
         pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
-        // Place queens
+        // Queens
         pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
-        // Place kings
+        // Kings
         pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
         pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
 
         let selectedPiece = null;
         let playerTurn = new BABYLON.Color3(1, 1, 1);
-        var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-        var text1 = new BABYLON.GUI.TextBlock();
+        const text1 = new BABYLON.GUI.TextBlock();
         text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
         text1.text = "White's Turn";
         text1.color = "White";
@@ -128,38 +129,33 @@
             if (selectedPiece) {
                 if (selectedPiece.material.diffuseColor.equals(playerTurn)) {
                     const pickedObject = pickResult.pickedMesh;
-                    if (pickedObject && canMove(selectedPiece, pickedObject) && !(pickedObject.position.x == selectedPiece.x && pickedObject.position.z == selectedPiece.position.z)) { 
+                    if (pickedObject && canMove(selectedPiece, pickedObject) && !(pickedObject.position.x == selectedPiece.position.x && pickedObject.position.z == selectedPiece.position.z)) {
+                        // Check for king capture
                         if (pickedObject.name.includes("king")) {
-                            declareWinner(selectedPiece.material.diffuseColor);
+                            alert(`${playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? "White" : "Black"} Wins!`);
+                            // Reset the game or take other actions if needed
                         } else {
-                            // Move the piece to the new position
-                            selectedPiece.position = new BABYLON.Vector3(pickedObject.position.x, selectedPiece.position.y, pickedObject.position.z);
-                            playerTurn = playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? new BABYLON.Color3(0.3, 0.3, 0.3) : new BABYLON.Color3(1, 1, 1);
-                            text1.text = playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? "White's Turn" : "Black's Turn";
+                            // Move the piece
+                            selectedPiece.position.copyFrom(pickedObject.position);
                         }
+                        // Switch turns
+                        playerTurn = playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? new BABYLON.Color3(0.3, 0.3, 0.3) : new BABYLON.Color3(1, 1, 1);
+                        text1.text = `${playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? "White" : "Black"}'s Turn`;
                     }
-                    selectedPiece = null; // Reset selected piece after the move
+                    selectedPiece = null; // Deselect piece
                 }
-            } else {
-                selectedPiece = pickResult.pickedMesh; // Select piece
             }
         };
 
         const canMove = (piece, target) => {
-            // Implement movement validation logic based on the piece type
-            return true; // Placeholder for movement logic
+            // Implement movement logic based on piece type
+            // This is a placeholder, so you need to add actual rules for each piece type.
+            return true; // Allow movement for demonstration
         };
 
-        const declareWinner = (color) => {
-            alert(color.equals(new BABYLON.Color3(1, 1, 1)) ? "White Wins!" : "Black Wins!");
-            resetGame(); // Optional: Reset game after a win
-        };
-
-        const resetGame = () => {
-            // Implement your game reset logic here
-            pieces.forEach(piece => piece.dispose());
-            selectedPiece = null;
-            // Recreate the scene or reset pieces to their original positions
+        // Export button functionality
+        document.getElementById("exportButton").onclick = () => {
+            BABYLON.StlExporter.ExportMesh(pieces, "chessboard.stl", scene);
         };
 
         engine.runRenderLoop(() => {
@@ -169,16 +165,6 @@
         window.addEventListener("resize", () => {
             engine.resize();
         });
-
-        document.getElementById("exportButton").onclick = () => {
-            BABYLON.StlExport.GetSTL(scene).then(stlData => {
-                const blob = new Blob([stlData], { type: 'application/octet-stream' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'chessboard.stl';
-                link.click();
-            });
-        };
     </script>
 </body>
 </html>
