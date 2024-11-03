@@ -242,18 +242,32 @@
             }
         }
 
-              document.getElementById("exportButton").addEventListener("click", () => {
-            const meshesToExport = pieces.concat(scene.meshes.filter(mesh => mesh.name.startsWith("tile")));
-            BABYLON.STLExport.CreateSTL(meshesToExport, true, "chessboard.stl", scene);
+                   // Function to export the chessboard and pieces as STL
+        document.getElementById("exportButton").addEventListener("click", () => {
+            const stlExporter = new BABYLON.STLExport();
+            const meshToExport = [];
+            
+            // Add chessboard tiles and pieces to the export array
+            pieces.forEach(piece => {
+                meshToExport.push(piece);
+            });
+            engine.stopRender();
+            stlExporter.exportMesh(meshToExport, "chessboard_with_pieces", scene);
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
         });
 
+        // Render loop
         engine.runRenderLoop(() => {
             scene.render();
         });
 
+        // Resize
         window.addEventListener("resize", () => {
             engine.resize();
         });
     </script>
 </body>
 </html>
+
