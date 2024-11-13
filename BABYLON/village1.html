@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon.js Enhanced Village with Fortress</title>
+    <title>Babylon.js Village with Fortress</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.js"></script>
     <script src="https://cdn.babylonjs.com/serializers/babylon.glTFSerializer.js"></script>
@@ -47,19 +47,6 @@
             skyboxMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.7, 1);
             skybox.material = skyboxMaterial;
 
-            // Village Houses
-            const housePositions = [
-                new BABYLON.Vector3(-10, 0, -10),
-                new BABYLON.Vector3(10, 0, -10),
-                new BABYLON.Vector3(-10, 0, 10),
-                new BABYLON.Vector3(10, 0, 10)
-            ];
-            housePositions.forEach(position => {
-                BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb", scene).then((result) => {
-                    result.meshes[0].position = position;
-                });
-            });
-
             // Fortress Walls
             const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
             wallMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
@@ -91,6 +78,22 @@
             createTower(10, -10);  // Front-right corner
             createTower(-10, 10);  // Back-left corner
             createTower(10, 10);   // Back-right corner
+
+            // Village Houses
+            const housePositions = [
+                new BABYLON.Vector3(0, 0, 0),      // Inside the fortress
+                new BABYLON.Vector3(4, 0, -4),     // Inside the fortress
+                new BABYLON.Vector3(-12, 0, -10),  // Outside the fortress
+                new BABYLON.Vector3(12, 0, -10),   // Outside the fortress
+                new BABYLON.Vector3(-12, 0, 10),   // Outside the fortress
+                new BABYLON.Vector3(12, 0, 10)     // Outside the fortress
+            ];
+
+            housePositions.forEach(position => {
+                BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb", scene).then((result) => {
+                    result.meshes[0].position = position;
+                });
+            });
 
             // Dude Character with Keyboard Controls
             BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
