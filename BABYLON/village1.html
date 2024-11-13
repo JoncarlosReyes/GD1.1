@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon.js Village with Fortress</title>
+    <meta name="viewport" content="width=100%, initial-scale=1.0">
+    <title>Babylon.js Village with Fortress and Balls</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.js"></script>
     <script src="https://cdn.babylonjs.com/serializers/babylon.glTFSerializer.js"></script>
@@ -22,8 +22,8 @@
             const scene = new BABYLON.Scene(engine);
 
             // Cameras
-            const camera = new BABYLON.ArcRotateCamera("overheadCamera", -Math.PI / 1.5, Math.PI / 2.2, 30, new BABYLON.Vector3(0, 0, 0), scene);
-            const sideCamera = new BABYLON.ArcRotateCamera("sideCamera", -Math.PI / 2, Math.PI / 3, 15, new BABYLON.Vector3(0, 0, 0), scene);
+            const camera = new BABYLON.ArcRotateCamera("overheadCamera", -Math.PI / 1.5, Math.PI / 2.2, 50, new BABYLON.Vector3(0, 0, 0), scene);
+            const sideCamera = new BABYLON.ArcRotateCamera("sideCamera", -Math.PI / 2, Math.PI / 3, 40, new BABYLON.Vector3(0, 0, 0), scene);
             camera.attachControl(canvas, true);
             scene.activeCamera = camera;
 
@@ -52,8 +52,8 @@
             wallMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
             const wallThickness = 1;
-            const wallHeight = 5;
-            const wallLength = 20;
+            const wallHeight = 6;
+            const wallLength = 60;
 
             const createWall = (x, z, rotation) => {
                 const wall = BABYLON.MeshBuilder.CreateBox("wall", { height: wallHeight, width: wallLength, depth: wallThickness }, scene);
@@ -62,31 +62,30 @@
                 wall.material = wallMaterial;
             };
 
-            createWall(0, -10, 0);          // Front wall
-            createWall(0, 10, 0);           // Back wall
-            createWall(-10, 0, Math.PI / 2); // Left wall
-            createWall(10, 0, Math.PI / 2);  // Right wall
+            // Creating a fortress surrounding the village houses
+            createWall(0, -30, 0);         // Front wall
+            createWall(0, 30, 0);          // Back wall
+            createWall(-30, 0, Math.PI / 2); // Left wall
+            createWall(30, 0, Math.PI / 2);  // Right wall
 
             // Fortress Towers
             const createTower = (x, z) => {
-                const tower = BABYLON.MeshBuilder.CreateCylinder("tower", { diameter: 3, height: 8 }, scene);
+                const tower = BABYLON.MeshBuilder.CreateCylinder("tower", { diameter: 4, height: 8 }, scene);
                 tower.position = new BABYLON.Vector3(x, 4, z);
                 tower.material = wallMaterial;
             };
 
-            createTower(-10, -10); // Front-left corner
-            createTower(10, -10);  // Front-right corner
-            createTower(-10, 10);  // Back-left corner
-            createTower(10, 10);   // Back-right corner
+            createTower(-30, -30); // Front-left corner
+            createTower(30, -30);  // Front-right corner
+            createTower(-30, 30);  // Back-left corner
+            createTower(30, 30);   // Back-right corner
 
-            // Village Houses
+            // Village Houses Inside Fortress
             const housePositions = [
-                new BABYLON.Vector3(0, 0, 0),      // Inside the fortress
-                new BABYLON.Vector3(4, 0, -4),     // Inside the fortress
-                new BABYLON.Vector3(-12, 0, -10),  // Outside the fortress
-                new BABYLON.Vector3(12, 0, -10),   // Outside the fortress
-                new BABYLON.Vector3(-12, 0, 10),   // Outside the fortress
-                new BABYLON.Vector3(12, 0, 10)     // Outside the fortress
+                new BABYLON.Vector3(-10, 0, -10),
+                new BABYLON.Vector3(10, 0, -10),
+                new BABYLON.Vector3(-10, 0, 10),
+                new BABYLON.Vector3(10, 0, 10)
             ];
 
             housePositions.forEach(position => {
@@ -94,6 +93,21 @@
                     result.meshes[0].position = position;
                 });
             });
+
+            // Adding balls inside the fortress
+            const createBall = (x, y, z, color) => {
+                const ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 2 }, scene);
+                ball.position = new BABYLON.Vector3(x, y, z);
+                const ballMaterial = new BABYLON.StandardMaterial("ballMaterial", scene);
+                ballMaterial.diffuseColor = color;
+                ball.material = ballMaterial;
+            };
+
+            // Place balls in various positions
+            createBall(-5, 1, -5, new BABYLON.Color3(1, 0, 0)); // Red ball
+            createBall(5, 1, 5, new BABYLON.Color3(0, 1, 0));   // Green ball
+            createBall(-5, 1, 5, new BABYLON.Color3(0, 0, 1));  // Blue ball
+            createBall(5, 1, -5, new BABYLON.Color3(1, 1, 0));  // Yellow ball
 
             // Dude Character with Keyboard Controls
             BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
@@ -110,16 +124,6 @@
                         case "a": dude.movePOV(-0.2, 0, 0); break;
                         case "d": dude.movePOV(0.2, 0, 0); break;
                     }
-                });
-            });
-
-            // Rotating Bunny
-            BABYLON.SceneLoader.ImportMeshAsync("", "./", "StanfordBunny.obj", scene).then((result) => {
-                result.meshes.forEach(mesh => {
-                    mesh.position = new BABYLON.Vector3(3, 0, 3);
-                    scene.registerBeforeRender(() => {
-                        mesh.rotation.y += 0.01;
-                    });
                 });
             });
 
