@@ -10,7 +10,7 @@
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Stickman GLB</button>
+    <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Scene GLB</button>
     
     <script>
         var canvas = document.getElementById("renderCanvas");
@@ -20,7 +20,7 @@
             const scene = new BABYLON.Scene(engine);
 
             // Adjusted camera for a new perspective
-            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 3, 20, new BABYLON.Vector3(0, 0, 0));
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 3, 30, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
 
             // Adjusted light intensity for brightness
@@ -28,125 +28,36 @@
             light.intensity = 1.5;
 
             // Set a custom background color
-            scene.clearColor = new BABYLON.Color3(0.4, 0.6, 0.8);
+            scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.9);
 
-            // Add ground plane
-            var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 50, height: 50}, scene);
+            // Add a larger ground plane
+            var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 100, height: 100}, scene);
             var groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
             groundMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5); // Grey color
             ground.material = groundMaterial;
 
-            BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb");
-     
-            const walk = function (turn, dist) {
-                this.turn = turn;
-                this.dist = dist;
-            }
-            
-            const track = [];
-            track.push(new walk(86, 7));
-            track.push(new walk(-85, 14.8));
-            track.push(new walk(-93, 16.5));
-            track.push(new walk(48, 25.5));
-            track.push(new walk(-112, 30.5));
-            track.push(new walk(-72, 33.2));
-            track.push(new walk(42, 37.5));
-            track.push(new walk(-98, 45.2));
-            track.push(new walk(0, 47))
-
-            // Dude
-            BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
-                var dude = result.meshes[0];
-
-                // Increase scaling for better visibility
-                dude.scaling = new BABYLON.Vector3(0.018, 0.018, 0.018);
-                    
-                dude.position = new BABYLON.Vector3(-6, 0, 0);
-                dude.rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(-95), BABYLON.Space.LOCAL);
-                const startRotation = dude.rotationQuaternion.clone();    
-                    
-                scene.beginAnimation(result.skeletons[0], 0, 100, true, 1.0);
-
-                let distance = 0;
-                let step = 0.015;
-                let p = 0;
-
-                scene.onBeforeRenderObservable.add(() => {
-                    dude.movePOV(0, 0, step);
-                    distance += step;
-                      
-                    if (distance > track[p].dist) {
-                        dude.rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(track[p].turn), BABYLON.Space.LOCAL);
-                        p +=1;
-                        p %= track.length; 
-                        if (p === 0) {
-                            distance = 0;
-                            dude.position = new BABYLON.Vector3(-6, 0, 0);
-                            dude.rotationQuaternion = startRotation.clone();
-                        }
-                    }
+            // Load the village buildings
+            BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb").then((result) => {
+                result.meshes.forEach((building, index) => {
+                    building.position = new BABYLON.Vector3((index % 5) * 10 - 20, 0, Math.floor(index / 5) * 10 - 10);
                 });
             });
 
-            // Create a red sphere
-            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {
-                diameter: 0.5,
-                segments: 32,
-            }, scene);
+            // Create and position colored spheres
+            var sphereProperties = { diameter: 2, segments: 32 };
+            var colors = [new BABYLON.Color3(1, 0, 0), new BABYLON.Color3(0, 1, 0), new BABYLON.Color3(0, 0, 1)];
+            var positions = [new BABYLON.Vector3(10, 1, 0), new BABYLON.Vector3(12, 1, 3), new BABYLON.Vector3(8, 1, 3)];
 
-            sphere.position = new BABYLON.Vector3(0, 0, 6);
-            var material = new BABYLON.StandardMaterial("material", scene); 
-            material.diffuseColor = new BABYLON.Color3(1, 0, 0); 
-            sphere.material = material;
-
-            // Define additional sphere properties
-            var sphereProperties = {
-                diameter: 2,
-                segments: 32,
-            };
-
-            var materials = [
-                new BABYLON.StandardMaterial("material1", scene),
-                new BABYLON.StandardMaterial("material2", scene),
-                new BABYLON.StandardMaterial("material3", scene)
-            ];
-
-            materials[0].diffuseColor = new BABYLON.Color3(1, 0, 0); // Red
-            materials[1].diffuseColor = new BABYLON.Color3(0, 1, 0); // Green
-            materials[2].diffuseColor = new BABYLON.Color3(0, 0, 1); // Blue
-
-            var positions = [
-                new BABYLON.Vector3(0, 0, 0),
-                new BABYLON.Vector3(0, 2, 0),
-                new BABYLON.Vector3(2, 0, 0)
-            ];
-
-            for (var i = 0; i < 3; i++) {
+            colors.forEach((color, i) => {
                 var sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + i, sphereProperties, scene);
                 sphere.position = positions[i];
-                sphere.material = materials[i];
-            }
+                var material = new BABYLON.StandardMaterial("material" + i, scene);
+                material.diffuseColor = color;
+                sphere.material = material;
+            });
             
-            BABYLON.SceneLoader.ImportMesh(
-                "",                        
-                "./",     
-                "StanfordBunny.obj",           
-                scene,                     
-                function (meshes) {        
-                    alert("How many meshes?", mesh.length);
-                    meshes.forEach(mesh => {
-                        mesh.position = new BABYLON.Vector3(0, 0, 0);
-                        meshes.scaling = new BABYLON.Vector3(2, 2, 2);
-                    });
-                },
-                null,                      
-                function (scene, message, exception) { 
-                    console.error("Error loading OBJ file:", message, exception);
-                }
-            );
+            alert("Village and spheres should have been loaded.");
 
-            alert("village, dude, and bunny should have been loaded with animation.");
-            
             return scene;
         };
 
@@ -161,7 +72,7 @@
         });
 
         function exportToGLB() {
-            BABYLON.GLTF2Export.GLBAsync(scene, "stickman.glb").then((glb) => {
+            BABYLON.GLTF2Export.GLBAsync(scene, "scene.glb").then((glb) => {
                 glb.downloadFiles();
             });
         }
