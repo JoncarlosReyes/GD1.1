@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon.js Enhanced Village</title>
+    <title>Babylon.js Enhanced Village with Fortress</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.js"></script>
     <script src="https://cdn.babylonjs.com/serializers/babylon.glTFSerializer.js"></script>
@@ -22,7 +22,7 @@
             const scene = new BABYLON.Scene(engine);
 
             // Cameras
-            const camera = new BABYLON.ArcRotateCamera("overheadCamera", -Math.PI / 1.5, Math.PI / 2.2, 20, new BABYLON.Vector3(0, 0, 0), scene);
+            const camera = new BABYLON.ArcRotateCamera("overheadCamera", -Math.PI / 1.5, Math.PI / 2.2, 30, new BABYLON.Vector3(0, 0, 0), scene);
             const sideCamera = new BABYLON.ArcRotateCamera("sideCamera", -Math.PI / 2, Math.PI / 3, 15, new BABYLON.Vector3(0, 0, 0), scene);
             camera.attachControl(canvas, true);
             scene.activeCamera = camera;
@@ -35,7 +35,7 @@
             });
 
             // Ground
-            const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 50, height: 50 }, scene);
+            const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
             const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
             groundMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.8, 0.3);
             ground.material = groundMaterial;
@@ -47,8 +47,50 @@
             skyboxMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.7, 1);
             skybox.material = skyboxMaterial;
 
-            // Village
-            BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb", scene);
+            // Village Houses
+            const housePositions = [
+                new BABYLON.Vector3(-10, 0, -10),
+                new BABYLON.Vector3(10, 0, -10),
+                new BABYLON.Vector3(-10, 0, 10),
+                new BABYLON.Vector3(10, 0, 10)
+            ];
+            housePositions.forEach(position => {
+                BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb", scene).then((result) => {
+                    result.meshes[0].position = position;
+                });
+            });
+
+            // Fortress Walls
+            const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
+            wallMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+
+            const wallThickness = 1;
+            const wallHeight = 5;
+            const wallLength = 20;
+
+            const createWall = (x, z, rotation) => {
+                const wall = BABYLON.MeshBuilder.CreateBox("wall", { height: wallHeight, width: wallLength, depth: wallThickness }, scene);
+                wall.position = new BABYLON.Vector3(x, wallHeight / 2, z);
+                wall.rotation.y = rotation;
+                wall.material = wallMaterial;
+            };
+
+            createWall(0, -10, 0);          // Front wall
+            createWall(0, 10, 0);           // Back wall
+            createWall(-10, 0, Math.PI / 2); // Left wall
+            createWall(10, 0, Math.PI / 2);  // Right wall
+
+            // Fortress Towers
+            const createTower = (x, z) => {
+                const tower = BABYLON.MeshBuilder.CreateCylinder("tower", { diameter: 3, height: 8 }, scene);
+                tower.position = new BABYLON.Vector3(x, 4, z);
+                tower.material = wallMaterial;
+            };
+
+            createTower(-10, -10); // Front-left corner
+            createTower(10, -10);  // Front-right corner
+            createTower(-10, 10);  // Back-left corner
+            createTower(10, 10);   // Back-right corner
 
             // Dude Character with Keyboard Controls
             BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
